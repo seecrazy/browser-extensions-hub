@@ -111,12 +111,12 @@ The store-readiness check currently uses `--allow-incomplete` because real scree
 
 ## Testing
 
-| Command                                                                       | Scope                                       |
-| ----------------------------------------------------------------------------- | ------------------------------------------- |
-| `pnpm test`                                                                   | Fast unit tests for shared and plugin logic |
-| `pnpm test:coverage`                                                          | Unit tests with V8 coverage                 |
-| `pnpm exec web-ext lint --source-dir extensions/<plugin>/.output/firefox-mv3` | Firefox add-on lint                         |
-| `pnpm test:e2e`                                                               | Playwright browser-level smoke tests        |
+| Command                                                                    | Scope                                       |
+| -------------------------------------------------------------------------- | ------------------------------------------- |
+| `pnpm test`                                                                | Fast unit tests for shared and plugin logic |
+| `pnpm test:coverage`                                                       | Unit tests with V8 coverage                 |
+| `pnpm exec web-ext lint --source-dir extensions/<plugin>/dist/firefox-mv3` | Firefox add-on lint                         |
+| `pnpm test:e2e`                                                            | Playwright browser-level smoke tests        |
 
 E2E tests require a Chromium browser:
 
@@ -139,13 +139,13 @@ xvfb-run --auto-servernum pnpm test:e2e
 1. Open `chrome://extensions`.
 2. Enable **Developer mode**.
 3. Choose **Load unpacked**.
-4. Load `extensions/<plugin>/.output/chrome-mv3`.
+4. Load `extensions/<plugin>/dist/chrome-mv3`.
 
 ### Firefox
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Choose **Load Temporary Add-on**.
-3. Select `extensions/<plugin>/.output/firefox-mv3/manifest.json`.
+3. Select `extensions/<plugin>/dist/firefox-mv3/manifest.json`.
 
 ## Add a plugin
 

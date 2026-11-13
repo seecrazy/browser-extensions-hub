@@ -77,16 +77,16 @@ jobs:
           node --experimental-strip-types scripts/validate-manifests.ts --plugin "$PLUGIN" --browser firefox
 
       - name: Lint Firefox build
-        run: pnpm exec web-ext lint --source-dir "extensions/${PLUGIN}/.output/firefox-mv3"
+        run: pnpm exec web-ext lint --source-dir "extensions//dist/firefox-mv3"
 
       - name: Pack Chrome artifact
         run: |
           mkdir -p release
-          (cd "extensions/${PLUGIN}/.output/chrome-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-chrome-mv3.zip" .)
+          (cd "extensions//dist/chrome-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-chrome-mv3.zip" .)
 
       - name: Pack Firefox artifact
         run: |
-          (cd "extensions/${PLUGIN}/.output/firefox-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-firefox-mv3.zip" .)
+          (cd "extensions//dist/firefox-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-firefox-mv3.zip" .)
 
       - name: Pack Firefox source artifact
         run: |

@@ -70,7 +70,7 @@ jobs:
 
       - name: Lint Firefox extensions
         run: |
-          for manifest in extensions/*/.output/firefox-mv3/manifest.json; do
+          for manifest in extensions/*/dist/firefox-mv3/manifest.json; do
             dir="$(dirname "$manifest")"
             echo "Linting $dir"
             pnpm exec web-ext lint --source-dir "$dir"

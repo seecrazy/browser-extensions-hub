@@ -21,6 +21,6 @@ Accepted
 
 ## 后果
 
-- manifest 校验必须检查 `.output` 中的最终 manifest。
+- manifest 校验必须检查 `dist` 中的最终 manifest。
 - WXT 版本必须固定。
 - 升级 WXT 必须触发全量构建。

@@ -590,8 +590,8 @@ pnpm --filter @hub/dark-mode-lite dev
 ### 构建产物
 
 ```text
-extensions/<plugin>/.output/chrome-mv3/
-extensions/<plugin>/.output/firefox-mv3/
+extensions/<plugin>/dist/chrome-mv3/
+extensions/<plugin>/dist/firefox-mv3/
 ```
 
 ## 11. CI

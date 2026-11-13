@@ -107,7 +107,7 @@ function validateStoreReadiness(
 ): void {
   const pluginDir = path.join(extensionsDir, plugin);
   const packageFile = path.join(pluginDir, "package.json");
-  const manifestFile = path.join(pluginDir, ".output", `${browserTarget}-mv3`, "manifest.json");
+  const manifestFile = path.join(pluginDir, "dist", `${browserTarget}-mv3`, "manifest.json");
   const listingDir = path.join(listingsDir, plugin);
   const errors: string[] = [];
   const warnings: string[] = [];

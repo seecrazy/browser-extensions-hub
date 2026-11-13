@@ -5,7 +5,7 @@ export async function launchWithExtension(plugin: string): Promise<{
   context: BrowserContext;
   extensionOrigin: string;
 }> {
-  const extensionPath = path.resolve(process.cwd(), "extensions", plugin, ".output", "chrome-mv3");
+  const extensionPath = path.resolve(process.cwd(), "extensions", plugin, "dist", "chrome-mv3");
   const context = await chromium.launchPersistentContext("", {
     headless: false,
     args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],

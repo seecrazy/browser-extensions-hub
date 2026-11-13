@@ -96,7 +96,7 @@ function discoverPlugins(): string[] {
 function validateManifest(browserTarget: BrowserTarget, plugin: string): void {
   const pluginDir = path.join(extensionsDir, plugin);
   const packagePath = path.join(pluginDir, "package.json");
-  const manifestPath = path.join(pluginDir, ".output", `${browserTarget}-mv3`, "manifest.json");
+  const manifestPath = path.join(pluginDir, "dist", `${browserTarget}-mv3`, "manifest.json");
 
   if (!existsSync(packagePath)) {
     throw new Error(`Missing package manifest: ${path.relative(process.cwd(), packagePath)}`);

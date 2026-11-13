@@ -1,6 +1,7 @@
 import { defineConfig } from "wxt";
 
 export default defineConfig({
+  outDir: "dist",
   manifestVersion: 3,
   manifest: {
     name: "New Tab Dashboard Lite",
