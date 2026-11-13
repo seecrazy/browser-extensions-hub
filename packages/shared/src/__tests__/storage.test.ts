@@ -102,6 +102,52 @@ describe("createNamespacedStorage", () => {
     });
   });
 
+  it("serializes concurrent patches for one namespace", async () => {
+    const storage = createNamespacedStorage<TestSettings>("test.settings", {
+      schemaVersion: 1,
+      name: "default",
+      count: 0,
+    });
+
+    await Promise.all([
+      storage.patch({ count: 1 }),
+      storage.patch({ count: 2 }),
+      storage.patch({ count: 3 }),
+    ]);
+
+    await expect(storage.get()).resolves.toEqual({
+      schemaVersion: 1,
+      name: "default",
+      count: 3,
+    });
+  });
+
+  it("persists validated patch results", async () => {
+    const storage = createNamespacedStorage<TestSettings>(
+      "test.settings",
+      {
+        schemaVersion: 1,
+        name: "default",
+        count: 0,
+      },
+      "local",
+      {
+        validate: (value) => {
+          const next = value as TestSettings;
+          return { ...next, name: "validated" };
+        },
+      },
+    );
+
+    await storage.patch({ count: 9 });
+
+    await expect(storage.get()).resolves.toEqual({
+      schemaVersion: 1,
+      name: "validated",
+      count: 9,
+    });
+  });
+
   it("notifies subscribers for matching namespaces only", async () => {
     const storage = createNamespacedStorage<TestSettings>("test.settings", {
       schemaVersion: 1,

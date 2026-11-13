@@ -24,7 +24,11 @@
     "validate:manifests": "node --experimental-strip-types scripts/validate-manifests.ts",
     "validate:release-tag": "node --experimental-strip-types scripts/validate-release-tag.ts",
     "format:check": "prettier --check .",
-    "audit": "pnpm audit --prod"
+    "audit": "pnpm audit --prod",
+    "validate:store-readiness": "node --experimental-strip-types scripts/validate-store-readiness.ts",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
   },
   "devDependencies": {
     "@hub/eslint-config": "workspace:*",
@@ -35,7 +39,9 @@
     "typescript": "5.6.3",
     "chrome-webstore-upload-cli": "4.0.2",
     "web-ext": "10.8.0",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "@playwright/test": "1.65.0",
+    "@vitest/coverage-v8": "5.1.0"
   },
   "pnpm": {
     "overrides": {

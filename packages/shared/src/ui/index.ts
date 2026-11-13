@@ -49,3 +49,21 @@ export function createCard(...children: HTMLElement[]): HTMLDivElement {
 export function clearElement(element: HTMLElement): void {
   element.replaceChildren();
 }
+
+export type StatusView = {
+  set: (message: string, isError?: boolean) => void;
+};
+
+export function createStatusView(element: HTMLElement | null): StatusView {
+  return {
+    set(message, isError = false) {
+      if (!element) {
+        return;
+      }
+
+      element.textContent = message;
+      element.classList.toggle("hub-status-error", isError);
+      element.classList.toggle("hub-status-success", !isError && message.length > 0);
+    },
+  };
+}

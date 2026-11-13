@@ -6,6 +6,8 @@ export type ReadingProgressPatch = Partial<{
   color: string;
   height: number;
   position: "top" | "bottom";
+  offsetTop: number;
+  offsetBottom: number;
 }>;
 
 export const readingProgressMessages = defineMessageContract({

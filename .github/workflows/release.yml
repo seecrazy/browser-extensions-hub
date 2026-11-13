@@ -15,6 +15,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       plugin: ${{ steps.tag.outputs.plugin }}
       version: ${{ steps.tag.outputs.version }}
@@ -45,6 +46,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: validate
     env:
       PLUGIN: ${{ needs.validate.outputs.plugin }}
@@ -100,10 +102,14 @@ jobs:
             package.json \
             tsconfig.base.json
 
-      - name: Generate checksums
+      - name: Generate checksums and smoke check
         run: |
+          test -f "release/${PLUGIN}-${VERSION}-chrome-mv3.zip"
+          test -f "release/${PLUGIN}-${VERSION}-firefox-mv3.zip"
+          test -f "release/${PLUGIN}-${VERSION}-firefox-source.zip"
           cd release
           sha256sum * > SHA256SUMS
+          test -f SHA256SUMS
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
         with:
@@ -112,6 +118,8 @@ jobs:
 
   publish-chrome:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: chrome-publish
     needs:
       - validate
       - build
@@ -172,6 +180,8 @@ jobs:
 
   publish-firefox:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: firefox-publish
     needs:
       - validate
       - build
@@ -243,6 +253,7 @@ jobs:
 
   github-release:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs:
       - validate
       - build

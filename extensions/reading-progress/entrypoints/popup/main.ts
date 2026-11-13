@@ -1,5 +1,6 @@
+import { getActiveTab, injectRuntimeContentScript } from "@hub/shared/injection";
 import { createTabMessageSender } from "@hub/shared/messaging";
-import { browser } from "wxt/browser";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { readingProgressMessages } from "../../lib/messages";
 import type { ReadingProgressSiteState } from "../../lib/types";
@@ -9,17 +10,10 @@ const enabledInput = document.querySelector<HTMLInputElement>("#enabled");
 const colorInput = document.querySelector<HTMLInputElement>("#color");
 const heightInput = document.querySelector<HTMLInputElement>("#height");
 const positionInput = document.querySelector<HTMLSelectElement>("#position");
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const offsetTopInput = document.querySelector<HTMLInputElement>("#offset-top");
+const offsetBottomInput = document.querySelector<HTMLInputElement>("#offset-bottom");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const sendMessage = createTabMessageSender(readingProgressMessages);
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
 
 function renderState(state: ReadingProgressSiteState): void {
   if (originLabel) {
@@ -30,77 +24,78 @@ function renderState(state: ReadingProgressSiteState): void {
   if (colorInput) colorInput.value = state.settings.color;
   if (heightInput) heightInput.value = String(state.settings.height);
   if (positionInput) positionInput.value = state.settings.position;
-}
-
-async function injectContentScript(tabId: number): Promise<void> {
-  await browser.scripting.executeScript({
-    target: {
-      tabId,
-    },
-    files: ["/content-scripts/reading-progress.js"],
-  });
+  if (offsetTopInput) offsetTopInput.value = String(state.settings.offsetTop);
+  if (offsetBottomInput) offsetBottomInput.value = String(state.settings.offsetBottom);
 }
 
 async function loadState(): Promise<void> {
-  const [tab] = await browser.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
+  const tabId = (await getActiveTab()).tabId;
 
-  if (!tab?.id || !enabledInput || !colorInput || !heightInput || !positionInput || !status) {
-    setStatus("No active tab available.", true);
+  if (
+    !tabId ||
+    !enabledInput ||
+    !colorInput ||
+    !heightInput ||
+    !positionInput ||
+    !offsetTopInput ||
+    !offsetBottomInput
+  ) {
+    statusView.set("No active tab available.", true);
     return;
   }
 
   try {
-    await injectContentScript(tab.id);
-    const response = await sendMessage(tab.id, {
+    await injectRuntimeContentScript({
+      file: "/content-scripts/reading-progress.js",
+    });
+    const response = await sendMessage(tabId, {
       type: "READING_PROGRESS_GET_SITE_STATE",
     });
 
     if (!response.ok) {
-      setStatus(response.error.message, true);
+      statusView.set(response.error.message, true);
       return;
     }
 
     renderState(response.data);
-    setStatus("Connected to current tab.");
+    statusView.set("Connected to current tab.");
   } catch (error) {
-    setStatus(
+    statusView.set(
       error instanceof Error ? error.message : "This tab cannot use Reading Progress.",
       true,
     );
   }
 }
 
-async function saveState(patch: {
+type ReadingProgressPatch = {
   enabled?: boolean;
   color?: string;
   height?: number;
   position?: "top" | "bottom";
-}): Promise<void> {
-  const [tab] = await browser.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
+  offsetTop?: number;
+  offsetBottom?: number;
+};
 
-  if (!tab?.id || !status) {
-    setStatus("No active tab available.", true);
+async function saveState(patch: ReadingProgressPatch): Promise<void> {
+  const tabId = (await getActiveTab()).tabId;
+
+  if (!tabId) {
+    statusView.set("No active tab available.", true);
     return;
   }
 
-  const response = await sendMessage(tab.id, {
+  const response = await sendMessage(tabId, {
     type: "READING_PROGRESS_SET_SITE_STATE",
     payload: patch,
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
   renderState(response.data);
-  setStatus("Saved.");
+  statusView.set("Saved.");
 }
 
 enabledInput?.addEventListener("change", () => {
@@ -124,6 +119,18 @@ heightInput?.addEventListener("input", () => {
 positionInput?.addEventListener("change", () => {
   void saveState({
     position: positionInput.value === "bottom" ? "bottom" : "top",
+  });
+});
+
+offsetTopInput?.addEventListener("input", () => {
+  void saveState({
+    offsetTop: Number(offsetTopInput.value),
+  });
+});
+
+offsetBottomInput?.addEventListener("input", () => {
+  void saveState({
+    offsetBottom: Number(offsetBottomInput.value),
   });
 });
 

@@ -3,6 +3,8 @@ export type ReadingProgressSiteSettings = {
   color: string;
   height: number;
   position: "top" | "bottom";
+  offsetTop: number;
+  offsetBottom: number;
 };
 
 export type ReadingProgressSettings = {
@@ -38,6 +40,14 @@ export function normalizeHeight(value: unknown): number {
   return Math.min(12, Math.max(2, Math.round(value)));
 }
 
+export function normalizeOffset(value: unknown): number {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return 0;
+  }
+
+  return Math.min(200, Math.max(0, Math.round(value)));
+}
+
 export function normalizePosition(value: unknown): "top" | "bottom" {
   return value === "bottom" ? "bottom" : "top";
 }
@@ -59,6 +69,8 @@ export function validateReadingProgressSettings(value: unknown): ReadingProgress
       color: normalizeColor(siteRecord.color),
       height: normalizeHeight(siteRecord.height),
       position: normalizePosition(siteRecord.position),
+      offsetTop: normalizeOffset(siteRecord.offsetTop),
+      offsetBottom: normalizeOffset(siteRecord.offsetBottom),
     };
   }
 

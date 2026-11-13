@@ -82,7 +82,22 @@ pnpm lint
 pnpm format:check
 pnpm test
 pnpm validate:manifests
+pnpm validate:store-readiness --allow-incomplete
 pnpm audit --prod
+```
+
+E2E tests are separate and use Chromium:
+
+```bash
+pnpm build
+pnpm test:e2e:install
+pnpm test:e2e
+```
+
+Coverage:
+
+```bash
+pnpm test:coverage
 ```
 
 Manifest validation checks the built output and supports a single plugin or browser:

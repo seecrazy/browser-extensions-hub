@@ -1,45 +1,62 @@
+import { injectRuntimeContentScript } from "@hub/shared/injection";
 import { createNamespacedStorage } from "@hub/shared/storage";
+import { createStatusView } from "@hub/shared/ui";
 import { browser } from "wxt/browser";
 import "@hub/shared/ui/styles.css";
 import {
   clearClipboardHistory,
   clipboardDefaults,
+  isOriginDisabled,
+  normalizeOrigin,
   removeClipboardItem,
+  removeExpiredItems,
   searchClipboardHistory,
+  toggleOrigin,
   validateClipboardSettings,
 } from "../../lib/types";
 import type { ClipboardItem } from "../../lib/types";
 
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
+const originLabel = document.querySelector<HTMLParagraphElement>("#origin");
 const activateButton = document.querySelector<HTMLButtonElement>("#activate");
+const originToggleButton = document.querySelector<HTMLButtonElement>("#toggle-origin");
 const searchInput = document.querySelector<HTMLInputElement>("#search");
+const expiryInput = document.querySelector<HTMLInputElement>("#expiry");
 const historyList = document.querySelector<HTMLUListElement>("#history");
 const clearButton = document.querySelector<HTMLButtonElement>("#clear");
 const storage = createNamespacedStorage("clipboard-history.settings", clipboardDefaults, "local", {
   validate: validateClipboardSettings,
 });
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
+let currentOrigin = "";
 
 async function copyText(item: ClipboardItem): Promise<void> {
   try {
     await navigator.clipboard.writeText(item.text);
-    setStatus("Copied.");
+    statusView.set("Copied.");
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Copy failed.", true);
+    statusView.set(error instanceof Error ? error.message : "Copy failed.", true);
   }
 }
 
 async function render(): Promise<void> {
-  const settings = await storage.get();
+  const settings = removeExpiredItems(await storage.get());
+  await storage.patch(settings);
   const items = searchClipboardHistory(settings, searchInput?.value ?? "");
+
+  if (originLabel) {
+    originLabel.textContent = currentOrigin || "Unknown origin";
+  }
+
+  if (originToggleButton) {
+    originToggleButton.textContent = isOriginDisabled(settings, currentOrigin)
+      ? "Enable on this site"
+      : "Disable on this site";
+    originToggleButton.disabled = !currentOrigin;
+  }
+
+  if (expiryInput) {
+    expiryInput.value = String(settings.expiresAtDays);
+  }
 
   if (!historyList) {
     return;
@@ -80,28 +97,43 @@ async function render(): Promise<void> {
   }
 }
 
-activateButton?.addEventListener("click", async () => {
+async function loadOrigin(): Promise<void> {
   const [tab] = await browser.tabs.query({
     active: true,
     currentWindow: true,
   });
+  currentOrigin = tab?.url ? normalizeOrigin(tab.url) : "";
+}
 
-  if (!tab?.id || !activateButton) {
-    setStatus("No active tab available.", true);
+activateButton?.addEventListener("click", async () => {
+  try {
+    const result = await injectRuntimeContentScript({
+      file: "/content-scripts/clipboard-history.js",
+    });
+    currentOrigin = result.origin ?? currentOrigin;
+    statusView.set("Enabled. Copy text on this tab to save it locally.");
+    await render();
+  } catch (error) {
+    statusView.set(error instanceof Error ? error.message : "This tab cannot be enabled.", true);
+  }
+});
+
+originToggleButton?.addEventListener("click", async () => {
+  if (!currentOrigin) {
     return;
   }
 
-  try {
-    await browser.scripting.executeScript({
-      target: {
-        tabId: tab.id,
-      },
-      files: ["/content-scripts/clipboard-history.js"],
-    });
-    setStatus("Enabled. Copy text on this tab to save it locally.");
-  } catch (error) {
-    setStatus(error instanceof Error ? error.message : "This tab cannot be enabled.", true);
-  }
+  await storage.patch(toggleOrigin(await storage.get(), currentOrigin));
+  statusView.set("Saved site preference.");
+  await render();
+});
+
+expiryInput?.addEventListener("change", async () => {
+  await storage.patch({
+    expiresAtDays: Number(expiryInput.value),
+  });
+  statusView.set("Saved expiry.");
+  await render();
 });
 
 searchInput?.addEventListener("input", () => {
@@ -110,7 +142,8 @@ searchInput?.addEventListener("input", () => {
 
 clearButton?.addEventListener("click", async () => {
   await storage.patch(clearClipboardHistory(await storage.get()));
-  setStatus("History cleared.");
+  statusView.set("History cleared.");
+  await render();
 });
 
-void render();
+void loadOrigin().then(render);

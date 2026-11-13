@@ -1,4 +1,4 @@
-export type AnnotationTool = "rectangle" | "arrow" | "text";
+export type AnnotationTool = "rectangle" | "arrow" | "text" | "brush";
 
 export type AnnotationSettings = {
   schemaVersion: 1;
@@ -29,7 +29,7 @@ export function normalizeStrokeWidth(value: unknown): number {
 }
 
 export function normalizeTool(value: unknown): AnnotationTool {
-  return value === "arrow" || value === "text" ? value : "rectangle";
+  return value === "arrow" || value === "text" || value === "brush" ? value : "rectangle";
 }
 
 export function validateAnnotationSettings(value: unknown): AnnotationSettings {

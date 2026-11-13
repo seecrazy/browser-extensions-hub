@@ -42,11 +42,11 @@ function renderBar(settings: ReadingProgressSiteSettings): void {
   bar.style.transition = "width 60ms linear";
 
   if (settings.position === "top") {
-    bar.style.top = "0";
+    bar.style.top = `${settings.offsetTop}px`;
     bar.style.bottom = "";
   } else {
     bar.style.top = "";
-    bar.style.bottom = "0";
+    bar.style.bottom = `${settings.offsetBottom}px`;
   }
 }
 

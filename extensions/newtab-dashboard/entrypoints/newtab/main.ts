@@ -19,6 +19,7 @@ const dateLabel = document.querySelector<HTMLParagraphElement>("#date");
 const timeLabel = document.querySelector<HTMLHeadingElement>("#time");
 const todoList = document.querySelector<HTMLUListElement>("#todos");
 const shortcutList = document.querySelector<HTMLUListElement>("#shortcuts");
+const shortcutError = document.querySelector<HTMLParagraphElement>("#shortcut-error");
 
 function renderClock(): void {
   const now = new Date();
@@ -154,7 +155,11 @@ document
 
       urlInput.value = "";
     } catch (error) {
-      window.alert(error instanceof Error ? error.message : "Invalid shortcut URL.");
+      if (shortcutError) {
+        shortcutError.textContent =
+          error instanceof Error ? error.message : "Invalid shortcut URL.";
+        shortcutError.removeAttribute("hidden");
+      }
     }
   });
 

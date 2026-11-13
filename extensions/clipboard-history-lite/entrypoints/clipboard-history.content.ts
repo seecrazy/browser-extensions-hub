@@ -1,5 +1,11 @@
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { addClipboardItem, clipboardDefaults, validateClipboardSettings } from "../lib/types";
+import {
+  addClipboardItem,
+  clipboardDefaults,
+  isOriginDisabled,
+  removeExpiredItems,
+  validateClipboardSettings,
+} from "../lib/types";
 
 const settingsStorage = createNamespacedStorage(
   "clipboard-history.settings",
@@ -29,13 +35,24 @@ async function initialize(): Promise<void> {
   }
 
   windowWithMarker[installedMarker] = true;
+  const origin = document.location.origin;
 
   document.addEventListener(
     "copy",
     (event) => {
       void settingsStorage
         .get()
-        .then((settings) => settingsStorage.patch(addClipboardItem(settings, copiedText(event))));
+        .then(async (settings) => {
+          if (isOriginDisabled(settings, origin)) {
+            return settings;
+          }
+
+          const withoutExpired = removeExpiredItems(settings);
+          const next = addClipboardItem(withoutExpired, copiedText(event));
+          await settingsStorage.patch(next);
+          return next;
+        })
+        .catch(() => undefined);
     },
     true,
   );

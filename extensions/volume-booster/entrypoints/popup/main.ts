@@ -1,22 +1,14 @@
+import { getActiveTab, injectRuntimeContentScript } from "@hub/shared/injection";
 import { createTabMessageSender } from "@hub/shared/messaging";
-import { browser } from "wxt/browser";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { volumeMessages } from "../../lib/messages";
 import type { VolumeMediaState } from "../../lib/types";
 
 const volumeInput = document.querySelector<HTMLInputElement>("#volume");
 const valueLabel = document.querySelector<HTMLParagraphElement>("#value");
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const sendMessage = createTabMessageSender(volumeMessages);
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
 
 function renderState(state: VolumeMediaState): void {
   if (volumeInput && valueLabel) {
@@ -25,7 +17,7 @@ function renderState(state: VolumeMediaState): void {
   }
 
   if (state.mediaCount === 0) {
-    setStatus("No media element found in the main frame.");
+    statusView.set("No media element found in the main frame.");
     return;
   }
 
@@ -35,49 +27,37 @@ function renderState(state: VolumeMediaState): void {
     state.unsupportedCount > 0
       ? ` ${state.unsupportedCount} media element(s) cannot boost above 100% because they are cross-origin without CORS.`
       : "";
-  setStatus(`Connected.${audioText}${unsupportedText}`);
+  statusView.set(`Connected.${audioText}${unsupportedText}`);
 }
 
 async function getActiveTabId(): Promise<number | null> {
-  const [tab] = await browser.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
-
-  return tab?.id ?? null;
-}
-
-async function injectContentScript(tabId: number): Promise<void> {
-  await browser.scripting.executeScript({
-    target: {
-      tabId,
-    },
-    files: ["/content-scripts/volume-booster.js"],
-  });
+  return (await getActiveTab()).tabId ?? null;
 }
 
 async function loadVolume(): Promise<void> {
   const tabId = await getActiveTabId();
 
-  if (!tabId || !volumeInput || !valueLabel || !status) {
-    setStatus("No active tab available.", true);
+  if (!tabId || !volumeInput || !valueLabel) {
+    statusView.set("No active tab available.", true);
     return;
   }
 
   try {
-    await injectContentScript(tabId);
+    await injectRuntimeContentScript({
+      file: "/content-scripts/volume-booster.js",
+    });
     const response = await sendMessage(tabId, {
       type: "VOLUME_GET",
     });
 
     if (!response.ok) {
-      setStatus(response.error.message, true);
+      statusView.set(response.error.message, true);
       return;
     }
 
     renderState(response.data);
   } catch (error) {
-    setStatus(
+    statusView.set(
       error instanceof Error ? error.message : "This tab cannot use Volume Booster Lite.",
       true,
     );
@@ -88,7 +68,7 @@ async function setVolume(level: number): Promise<void> {
   const tabId = await getActiveTabId();
 
   if (!tabId || !valueLabel) {
-    setStatus("No active tab available.", true);
+    statusView.set("No active tab available.", true);
     return;
   }
 
@@ -101,7 +81,7 @@ async function setVolume(level: number): Promise<void> {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 

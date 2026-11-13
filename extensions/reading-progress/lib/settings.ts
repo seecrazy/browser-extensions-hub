@@ -15,6 +15,8 @@ export function getSiteState(
       color: "#60a5fa",
       height: 3,
       position: "top",
+      offsetTop: 0,
+      offsetBottom: 0,
     },
   };
 }
@@ -35,6 +37,8 @@ export function patchSiteState(
         color: patch.color ?? current.color,
         height: patch.height ?? current.height,
         position: patch.position ?? current.position,
+        offsetTop: patch.offsetTop ?? current.offsetTop,
+        offsetBottom: patch.offsetBottom ?? current.offsetBottom,
       },
     },
   };

@@ -15,6 +15,7 @@
             <option value="rectangle">Rectangle</option>
             <option value="arrow">Arrow</option>
             <option value="text">Text</option>
+            <option value="brush">Brush</option>
           </select>
           <label class="hub-label" for="color">Color</label>
           <input id="color" type="color" value="#dc2626" />
@@ -27,6 +28,10 @@
         <p id="status" class="hub-status"></p>
       </div>
       <canvas id="canvas"></canvas>
+      <div id="text-dialog" class="hub-card" hidden>
+        <input id="annotation-text" class="hub-input" placeholder="Annotation text" />
+        <button id="save-text" class="hub-button">Add text</button>
+      </div>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

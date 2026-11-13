@@ -10,6 +10,12 @@
       <h1 class="hub-title">Clipboard History Lite</h1>
       <div class="hub-card">
         <button id="activate" class="hub-button">Enable on this tab</button>
+        <p id="origin" class="hub-label">Unknown origin</p>
+        <button id="toggle-origin" class="hub-button hub-button-secondary">
+          Disable on this site
+        </button>
+        <label class="hub-label" for="expiry">Keep items for days</label>
+        <input id="expiry" class="hub-input" type="number" min="1" max="365" value="7" />
         <p id="status" class="hub-status"></p>
       </div>
       <div class="hub-card">

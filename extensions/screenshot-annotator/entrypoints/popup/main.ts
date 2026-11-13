@@ -1,17 +1,9 @@
 import { browser } from "wxt/browser";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 
 const captureButton = document.querySelector<HTMLButtonElement>("#capture");
-const status = document.querySelector<HTMLParagraphElement>("#status");
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 
 async function openAnnotator(dataUrl: string): Promise<void> {
   await browser.storage.session.set({
@@ -28,7 +20,7 @@ captureButton?.addEventListener("click", async () => {
   }
 
   captureButton.disabled = true;
-  setStatus("Capturing...");
+  statusView.set("Capturing...");
 
   try {
     const [tab] = await browser.tabs.query({
@@ -49,9 +41,9 @@ captureButton?.addEventListener("click", async () => {
     }
 
     await openAnnotator(dataUrl);
-    setStatus("Opened annotator.");
+    statusView.set("Opened annotator.");
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Capture failed.", true);
+    statusView.set(error instanceof Error ? error.message : "Capture failed.", true);
   } finally {
     captureButton.disabled = false;
   }

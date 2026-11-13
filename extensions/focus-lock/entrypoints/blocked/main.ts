@@ -1,4 +1,5 @@
 import { createMessageSender } from "@hub/shared/messaging";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { focusLockMessages } from "../../lib/messages";
 import type { FocusLockState } from "../../lib/types";
@@ -9,18 +10,9 @@ const cooldownArea = document.querySelector<HTMLDivElement>("#cooldown-area");
 const passwordInput = document.querySelector<HTMLInputElement>("#password");
 const unlockButton = document.querySelector<HTMLButtonElement>("#unlock");
 const cooldownButton = document.querySelector<HTMLButtonElement>("#cooldown");
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const sendMessage = createMessageSender(focusLockMessages);
 const blockedDomain = new URLSearchParams(document.location.search).get("domain") ?? "";
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
 
 async function loadState(): Promise<void> {
   const response = await sendMessage({
@@ -28,7 +20,7 @@ async function loadState(): Promise<void> {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
@@ -41,7 +33,7 @@ async function loadState(): Promise<void> {
   if (blockedDomain && state.unlockedDomains.includes(blockedDomain)) {
     if (passwordArea) passwordArea.hidden = true;
     if (cooldownArea) cooldownArea.hidden = true;
-    setStatus("Unlocked temporarily. Reloading this site should work now.");
+    statusView.set("Unlocked temporarily. Reloading this site should work now.");
     return;
   }
 
@@ -67,11 +59,11 @@ unlockButton?.addEventListener("click", async () => {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
-  setStatus("Unlocked. Try visiting the site again.");
+  statusView.set("Unlocked. Try visiting the site again.");
 });
 
 cooldownButton?.addEventListener("click", async () => {
@@ -83,7 +75,7 @@ cooldownButton?.addEventListener("click", async () => {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
@@ -91,7 +83,7 @@ cooldownButton?.addEventListener("click", async () => {
     cooldownButton.disabled = true;
   }
 
-  setStatus("Cooldown started. This page will relock in 60 seconds.");
+  statusView.set("Cooldown started. This page will relock in 60 seconds.");
 });
 
 void loadState();

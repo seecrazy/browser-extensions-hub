@@ -25,6 +25,18 @@
 - [x] Clipboard History Lite.
 - [x] Screenshot Annotator.
 - [x] Second-batch listings, icons, and tests.
+- [x] Iteration 4 storage write serialization.
+- [x] Shared injection and status helpers.
+- [x] Blocking dialog removal.
+- [x] Clipboard site controls and expiry.
+- [x] Privacy Cleaner result summary.
+- [x] Reading Progress offset.
+- [x] Screenshot brush/shortcuts/session cleanup.
+- [x] Store readiness validator.
+- [x] Manual QA checklists.
+- [x] Per-plugin docs.
+- [x] CI hardening, coverage, CodeQL, and release smoke checks.
+- [x] Playwright E2E skeleton.
 
 ## In progress
 
@@ -48,3 +60,20 @@
 - [x] Clipboard History Lite
 - [x] Screenshot Annotator
 - [x] Second-batch listings and tests
+
+## Iteration 4
+
+- [x] Serialize namespaced storage writes
+- [x] Shared runtime injection helper
+- [x] Shared popup status helper
+- [x] Replace blocking dialogs
+- [x] Clipboard site controls and expiry
+- [x] Privacy Cleaner result summary
+- [x] Reading Progress offset
+- [x] Screenshot brush/shortcuts/session cleanup
+- [x] Store readiness validator
+- [x] Manual QA checklists
+- [x] Per-plugin docs
+- [x] CI hardening/coverage/CodeQL
+- [x] Release smoke checks
+- [x] Playwright E2E skeleton

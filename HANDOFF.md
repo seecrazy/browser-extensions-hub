@@ -2,7 +2,7 @@
 
 ## Current state
 
-Iteration 3 is implemented on `main`.
+Iteration 4 is implemented on `main`.
 
 - `@hub/shared` has contract-aware messaging and validated namespaced storage.
 - Every plugin has local `lib/` types, settings, and message contracts.
@@ -13,6 +13,9 @@ Iteration 3 is implemented on `main`.
 - CI runs build, typecheck, lint, format check, tests, Firefox lint, manifest validation, audit, and dependency review.
 - Icons are generated flat PNGs at required sizes.
 - Ten plugins cover NTP, browsingData, content scripts, clipboard, and canvas page scenarios.
+- Shared storage writes are serialized per namespace.
+- Shared injection and status helpers reduce popup duplication.
+- Store readiness validation, QA checklists, per-plugin docs, coverage, CodeQL, release smoke checks, and a Playwright E2E skeleton are present.
 - Store listing, privacy, permission, and screenshot documents exist for all shipped plugins.
 - Turbo dead config has been removed; builds use `pnpm -r`.
 
@@ -26,18 +29,21 @@ pnpm format:check
 pnpm test
 pnpm validate:manifests
 pnpm audit --prod
+pnpm validate:store-readiness --allow-incomplete
+pnpm test:coverage
 ```
 
 ## Next steps
 
-1. Load all ten builds in Chrome and Firefox and complete manual QA.
+1. Load all ten builds in Chrome and Firefox and complete `docs/qa/<plugin>.md`.
 2. Verify Quick Translate against the real Google endpoint.
 3. Verify Privacy Cleaner on a disposable HTTP origin and Screenshot Annotator copy/download flows.
-4. Review generated icons with design and replace if a richer visual identity is needed.
-5. Capture store screenshots and complete `docs/listings/<plugin>/screenshots.md`.
-6. Configure GitHub store secrets.
-7. Run a release for one plugin and inspect all artifacts.
-8. Confirm Chrome draft and signed Firefox behavior before public store submission.
+4. Configure GitHub Environments `chrome-publish` and `firefox-publish` before real store publishing.
+5. Review generated icons with design and replace if a richer visual identity is needed.
+6. Capture store screenshots and complete `docs/listings/<plugin>/screenshots.md`.
+7. Configure GitHub store secrets.
+8. Run a release for one plugin and inspect all artifacts.
+9. Confirm Chrome draft and signed Firefox behavior before public store submission.
 
 ## Notes
 

@@ -1,21 +1,23 @@
+import { createMessageSender } from "@hub/shared/messaging";
+import { createStatusView } from "@hub/shared/ui";
 import { browser } from "wxt/browser";
 import "@hub/shared/ui/styles.css";
-import { createMessageSender } from "@hub/shared/messaging";
 import { privacyMessages } from "../../lib/messages";
+import { normalizeOrigin } from "../../lib/types";
+import type { PrivacySettings } from "../../lib/types";
 
 const originLabel = document.querySelector<HTMLParagraphElement>("#origin");
 const cleanButton = document.querySelector<HTMLButtonElement>("#clean");
 const optionsButton = document.querySelector<HTMLButtonElement>("#options");
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const sendMessage = createMessageSender(privacyMessages);
 
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
+function formatTypes(settings: PrivacySettings): string {
+  const selected = Object.entries(settings.cleanup)
+    .filter(([, enabled]) => enabled)
+    .map(([type]) => type)
+    .join(", ");
+  return selected || "no data types";
 }
 
 async function loadOrigin(): Promise<void> {
@@ -34,23 +36,24 @@ async function loadOrigin(): Promise<void> {
 }
 
 cleanButton?.addEventListener("click", async () => {
-  if (!cleanButton || !status) {
+  if (!cleanButton) {
     return;
   }
 
   cleanButton.disabled = true;
-  setStatus("Cleaning...");
+  statusView.set("Cleaning...");
   const response = await sendMessage({
     type: "PRIVACY_CLEAN_CURRENT_TAB",
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     cleanButton.disabled = false;
     return;
   }
 
-  setStatus(`Removed selected storage data for ${response.data.origin}.`);
+  const selectedTypes = formatTypes({ schemaVersion: 1, cleanup: response.data.cleanup });
+  statusView.set(`Cleared ${selectedTypes} for ${normalizeOrigin(response.data.origin)}.`);
 });
 
 optionsButton?.addEventListener("click", () => {

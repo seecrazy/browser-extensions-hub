@@ -8,7 +8,8 @@
     "./messaging": "./src/messaging.ts",
     "./storage": "./src/storage.ts",
     "./ui": "./src/ui/index.ts",
-    "./ui/styles.css": "./src/ui/styles.css"
+    "./ui/styles.css": "./src/ui/styles.css",
+    "./injection": "./src/injection.ts"
   },
   "devDependencies": {
     "@hub/tsconfig": "workspace:*",

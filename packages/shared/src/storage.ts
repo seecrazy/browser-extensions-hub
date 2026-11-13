@@ -28,6 +28,14 @@ export function createNamespacedStorage<T extends Versioned>(
   options: StorageOptions<T> = {},
 ): NamespacedStorage<T> {
   const storageArea = chrome.storage[area];
+  let writeQueue: Promise<unknown> = Promise.resolve();
+
+  function enqueueWrite<TWrite>(operation: () => Promise<TWrite>): Promise<TWrite> {
+    const next = writeQueue.then(operation, operation);
+
+    writeQueue = next.catch(() => undefined);
+    return next;
+  }
 
   const normalize = (value: unknown): T => {
     if (value === undefined || value === null) {
@@ -79,23 +87,24 @@ export function createNamespacedStorage<T extends Versioned>(
   return {
     get: read,
     async patch(patch) {
-      const current = await read();
-      const next: T = {
-        ...current,
-        ...patch,
-        schemaVersion: defaults.schemaVersion,
-      };
+      return enqueueWrite(async () => {
+        const current = await read();
+        const next: T = {
+          ...current,
+          ...patch,
+          schemaVersion: defaults.schemaVersion,
+        };
 
-      if (options.validate) {
-        return options.validate(next);
-      }
-
-      await persist(next);
-      return next;
+        const validated = options.validate ? options.validate(next) : next;
+        await persist(validated);
+        return validated;
+      });
     },
     async reset() {
-      await persist(defaults);
-      return defaults;
+      return enqueueWrite(async () => {
+        await persist(defaults);
+        return defaults;
+      });
     },
     subscribe(listener) {
       const callback: Parameters<typeof chrome.storage.onChanged.addListener>[0] = (

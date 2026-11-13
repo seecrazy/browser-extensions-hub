@@ -907,3 +907,110 @@ Store copy is source-controlled under `docs/listings/<plugin>/`. Each plugin has
 - Clipboard History 不读取剪贴板 API，也不读取输入框；只处理显式 copy 事件。
 - Screenshot Annotator 仅用户手势触发，数据不离开设备。
 - 所有插件保持 `data_collection_permissions.required = ["none"]`。
+
+---
+
+# Iteration 4 设计结论：稳定化与发布准备
+
+本节记录 Iteration 4 的实现结论。
+
+## 1. Storage 写队列
+
+`createNamespacedStorage` 对同一个 namespace 的 patch/reset 使用串行写队列，避免多个 popup、content script、background 同时读取旧 state 导致丢更新。读取不排队，写入按调用顺序排队。
+
+## 2. Shared runtime injection
+
+`@hub/shared/injection` 提供：
+
+```ts
+injectRuntimeContentScript({
+  file: "/content-scripts/example.js",
+});
+```
+
+它统一处理：
+
+- active/current window tab 查询；
+- tab id 校验；
+- `browser.scripting.executeScript`；
+- 错误归一化；
+- 返回 tabId / url / origin。
+
+popup 不再重复实现注入逻辑。
+
+## 3. Shared popup status
+
+`@hub/shared/ui` 提供 `createStatusView(element)`，返回：
+
+```ts
+{
+  set(message, isError?)
+}
+```
+
+所有插件 popup/options 使用同一状态显示规则。
+
+## 4. UX 一致性
+
+- 不再使用 `alert()`、`confirm()`、`prompt()`。
+- New Tab Dashboard 的 shortcut 错误改为行内错误。
+- Tab Stash rename/restore 确认使用 inline UI。
+- Screenshot Annotator text 使用 floating input。
+
+## 5. 插件行为增强
+
+### Clipboard History Lite
+
+- settings 增加 `enabledOrigins`, `disabledOrigins`, `expiresAtDays`。
+- content script 保存前检查当前 origin 是否禁用。
+- popup 可 disable/enable 当前 origin。
+- 渲染前移除过期项。
+- 仍不申请 `clipboardRead`。
+
+### Privacy Cleaner
+
+- cleanup response 增加 selected types。
+- popup 展示清理的 origin 和数据类型。
+- 不新增清理历史。
+
+### Reading Progress
+
+- site settings 增加 `offsetTop` 和 `offsetBottom`。
+- top/bottom bar 根据偏移放置。
+- popup 提供 offset 滑块。
+
+### Screenshot Annotator
+
+- 增加 brush 工具。
+- 支持 Esc 取消当前 drag。
+- 支持 Ctrl/Cmd+Z undo。
+- annotate 页加载截图后立即删除 `chrome.storage.session` 中的截图。
+- 不改变 permissions。
+
+## 6. Store readiness
+
+`scripts/validate-store-readiness.ts` 校验：
+
+- manifest 必填字段；
+- icons；
+- Firefox gecko id / data collection；
+- Chrome background；
+- popup/options/newtab/annotate 文件；
+- listing 和 privacy/permission 文档；
+- screenshots checklist；-禁止 placeholder 字样。
+
+## 7. 手工 QA
+
+`docs/qa/<plugin>.md` 为每个插件提供可执行 checklist，作为发布 gate。
+
+## 8. CI / release
+
+- 所有 CI job 增加 timeout。
+- Vitest 增加 coverage 支持。
+- CodeQL 扫描 TypeScript。
+- release build 后执行 artifact smoke check。
+- E2E 用 `pnpm test:e2e` 独立触发，常规 `pnpm test` 不下载浏览器。
+
+## 9. 文档
+
+每个插件目录新增 `PLUGIN.md`，README 只保留项目级 overview。QA checklist 在 `docs/qa/<plugin>.md`。

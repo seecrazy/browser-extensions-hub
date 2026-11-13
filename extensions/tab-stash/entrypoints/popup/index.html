@@ -19,6 +19,14 @@
         <input id="search" class="hub-input" placeholder="Search tabs" />
       </div>
       <div id="groups"></div>
+      <div id="dialog" class="hub-card" hidden>
+        <p id="dialog-message"></p>
+        <input id="dialog-input" class="hub-input" hidden />
+        <div class="hub-row">
+          <button id="dialog-cancel" class="hub-button hub-button-secondary">Cancel</button>
+          <button id="dialog-accept" class="hub-button">Confirm</button>
+        </div>
+      </div>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

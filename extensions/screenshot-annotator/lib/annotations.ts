@@ -6,7 +6,7 @@ export type Point = {
 };
 
 export type AnnotationOperation = {
-  type: "rectangle" | "arrow" | "text";
+  type: "rectangle" | "arrow" | "text" | "brush";
   start: Point;
   end: Point;
   text?: string;
@@ -47,6 +47,13 @@ export function drawAnnotation(
     const width = Math.abs(operation.end.x - operation.start.x);
     const height = Math.abs(operation.end.y - operation.start.y);
     context.strokeRect(x, y, width, height);
+  }
+
+  if (operation.type === "brush") {
+    context.beginPath();
+    context.moveTo(operation.start.x, operation.start.y);
+    context.lineTo(operation.end.x, operation.end.y);
+    context.stroke();
   }
 
   if (operation.type === "arrow") {

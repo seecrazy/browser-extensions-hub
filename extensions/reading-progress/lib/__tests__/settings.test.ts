@@ -18,6 +18,8 @@ describe("reading progress", () => {
       color: "#ff0000",
       height: 6,
       position: "bottom",
+      offsetTop: 0,
+      offsetBottom: 0,
     });
 
     expect(getSiteState(settings, "https://example.com").settings).toEqual({
@@ -25,12 +27,16 @@ describe("reading progress", () => {
       color: "#ff0000",
       height: 6,
       position: "bottom",
+      offsetTop: 0,
+      offsetBottom: 0,
     });
     expect(getSiteState(settings, "https://other.com").settings).toEqual({
       enabled: true,
       color: "#60a5fa",
       height: 3,
       position: "top",
+      offsetTop: 0,
+      offsetBottom: 0,
     });
   });
 });

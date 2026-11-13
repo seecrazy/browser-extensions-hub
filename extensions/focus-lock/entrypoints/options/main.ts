@@ -1,33 +1,18 @@
 import { createMessageSender } from "@hub/shared/messaging";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { focusLockMessages } from "../../lib/messages";
 import type { FocusLockState } from "../../lib/types";
 
-const status = document.querySelector<HTMLParagraphElement>("#status");
-const passwordStatus = document.querySelector<HTMLParagraphElement>("#password-status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
+const passwordStatusView = createStatusView(
+  document.querySelector<HTMLParagraphElement>("#password-status"),
+);
 const domainInput = document.querySelector<HTMLInputElement>("#domain");
 const domainsList = document.querySelector<HTMLUListElement>("#domains");
 const currentPasswordInput = document.querySelector<HTMLInputElement>("#current-password");
 const newPasswordInput = document.querySelector<HTMLInputElement>("#new-password");
 const sendMessage = createMessageSender(focusLockMessages);
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
-
-function setPasswordStatus(message: string, isError = false): void {
-  if (!passwordStatus) {
-    return;
-  }
-
-  passwordStatus.textContent = message;
-  passwordStatus.classList.toggle("hub-status-error", isError);
-}
 
 async function exportDomains(): Promise<void> {
   const response = await sendMessage({
@@ -35,7 +20,7 @@ async function exportDomains(): Promise<void> {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
@@ -47,7 +32,7 @@ async function exportDomains(): Promise<void> {
   link.download = "focus-lock-domains.json";
   link.click();
   URL.revokeObjectURL(link.href);
-  setStatus("Exported.");
+  statusView.set("Exported.");
 }
 
 async function importDomains(file: File): Promise<void> {
@@ -61,14 +46,14 @@ async function importDomains(file: File): Promise<void> {
     });
 
     if (!response.ok) {
-      setStatus(response.error.message, true);
+      statusView.set(response.error.message, true);
       return;
     }
 
-    setStatus(`Imported ${response.data.domains.length} domain(s).`);
+    statusView.set(`Imported ${response.data.domains.length} domain(s).`);
     await renderDomains();
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Unable to import file.", true);
+    statusView.set(error instanceof Error ? error.message : "Unable to import file.", true);
   }
 }
 
@@ -78,7 +63,7 @@ async function renderDomains(): Promise<void> {
   });
 
   if (!response.ok || !domainsList) {
-    setStatus(response.ok ? "Unable to load settings." : response.error.message, true);
+    statusView.set(response.ok ? "Unable to load settings." : response.error.message, true);
     return;
   }
 
@@ -106,7 +91,7 @@ async function renderDomains(): Promise<void> {
         });
 
         if (!removeResponse.ok) {
-          setStatus(removeResponse.error.message, true);
+          statusView.set(removeResponse.error.message, true);
           return;
         }
 
@@ -117,11 +102,7 @@ async function renderDomains(): Promise<void> {
     }
   }
 
-  if (passwordStatus) {
-    passwordStatus.textContent = state.hasPassword
-      ? "A local password is set."
-      : "No password is set.";
-  }
+  passwordStatusView.set(state.hasPassword ? "A local password is set." : "No password is set.");
 }
 
 document
@@ -141,12 +122,12 @@ document
     });
 
     if (!response.ok) {
-      setStatus(response.error.message, true);
+      statusView.set(response.error.message, true);
       return;
     }
 
     domainInput.value = "";
-    setStatus("Domain saved.");
+    statusView.set("Domain saved.");
     await renderDomains();
   });
 
@@ -168,7 +149,7 @@ document
     });
 
     if (!response.ok) {
-      setPasswordStatus(response.error.message, true);
+      passwordStatusView.set(response.error.message, true);
       return;
     }
 
@@ -178,7 +159,7 @@ document
       currentPasswordInput.value = "";
     }
 
-    setPasswordStatus("Password saved locally.");
+    passwordStatusView.set("Password saved locally.");
     await renderDomains();
   });
 
@@ -194,11 +175,11 @@ document
     });
 
     if (!response.ok) {
-      setPasswordStatus(response.error.message, true);
+      passwordStatusView.set(response.error.message, true);
       return;
     }
 
-    setPasswordStatus("Password removed.");
+    passwordStatusView.set("Password removed.");
     await renderDomains();
   });
 

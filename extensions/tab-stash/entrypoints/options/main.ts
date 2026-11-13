@@ -1,22 +1,14 @@
 import { createMessageSender } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { tabStashMessages } from "../../lib/messages";
 import { tabStashDefaults } from "../../lib/types";
 
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const includePinned = document.querySelector<HTMLInputElement>("#include-pinned");
 const sendMessage = createMessageSender(tabStashMessages);
 const settingsStorage = createNamespacedStorage("tab-stash.settings", tabStashDefaults);
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
 
 async function load(): Promise<void> {
   const settings = await settingsStorage.get();
@@ -35,7 +27,7 @@ async function exportGroups(): Promise<void> {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
@@ -47,7 +39,7 @@ async function exportGroups(): Promise<void> {
   link.download = `tab-stash-${new Date().toISOString().slice(0, 10)}.json`;
   link.click();
   URL.revokeObjectURL(link.href);
-  setStatus("Exported.");
+  statusView.set("Exported.");
 }
 
 async function importGroups(file: File): Promise<void> {
@@ -61,13 +53,13 @@ async function importGroups(file: File): Promise<void> {
     });
 
     if (!response.ok) {
-      setStatus(response.error.message, true);
+      statusView.set(response.error.message, true);
       return;
     }
 
-    setStatus(`Imported ${response.data.imported} group(s).`);
+    statusView.set(`Imported ${response.data.imported} group(s).`);
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Unable to import file.", true);
+    statusView.set(error instanceof Error ? error.message : "Unable to import file.", true);
   }
 }
 
@@ -75,7 +67,7 @@ includePinned?.addEventListener("change", async () => {
   await settingsStorage.patch({
     includePinned: includePinned.checked,
   });
-  setStatus("Saved.");
+  statusView.set("Saved.");
 });
 
 document.querySelector<HTMLButtonElement>("#export")?.addEventListener("click", () => {

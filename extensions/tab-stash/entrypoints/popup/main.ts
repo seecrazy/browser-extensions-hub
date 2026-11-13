@@ -1,26 +1,17 @@
 import { createMessageSender } from "@hub/shared/messaging";
-import { clearElement } from "@hub/shared/ui";
+import { clearElement, createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { tabStashMessages } from "../../lib/messages";
 import type { StashGroup } from "../../lib/types";
 
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const groupNameInput = document.querySelector<HTMLInputElement>("#group-name");
 const searchInput = document.querySelector<HTMLInputElement>("#search");
 const groupsContainer = document.querySelector<HTMLDivElement>("#groups");
 const sendMessage = createMessageSender(tabStashMessages);
 
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
-
 async function stashTabs(): Promise<void> {
-  setStatus("Stashing tabs...");
+  statusView.set("Stashing tabs...");
   const response = await sendMessage({
     type: "TAB_STASH_STASH_WINDOW",
     payload: {
@@ -29,7 +20,7 @@ async function stashTabs(): Promise<void> {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
@@ -37,7 +28,7 @@ async function stashTabs(): Promise<void> {
     response.data.duplicates.length > 0
       ? ` ${response.data.duplicates.length} duplicate URL(s) were also stashed.`
       : "";
-  setStatus(
+  statusView.set(
     response.data.count > 0
       ? `Stashed ${response.data.count} tabs.${duplicateText}`
       : "No stashable tabs.",
@@ -59,7 +50,7 @@ async function renderGroups(): Promise<void> {
   });
 
   if (!response.ok || !groupsContainer) {
-    setStatus(response.ok ? "Unable to render groups." : response.error.message, true);
+    statusView.set(response.ok ? "Unable to render groups." : response.error.message, true);
     return;
   }
 
@@ -73,6 +64,48 @@ async function renderGroups(): Promise<void> {
   for (const group of response.data) {
     groupsContainer.append(renderGroup(group));
   }
+}
+
+type DialogOptions = {
+  message: string;
+  inputValue?: string;
+};
+
+function showDialog(options: DialogOptions): Promise<string | null> {
+  const dialog = document.querySelector<HTMLDivElement>("#dialog");
+  const message = document.querySelector<HTMLParagraphElement>("#dialog-message");
+  const input = document.querySelector<HTMLInputElement>("#dialog-input");
+  const acceptButton = document.querySelector<HTMLButtonElement>("#dialog-accept");
+  const cancelButton = document.querySelector<HTMLButtonElement>("#dialog-cancel");
+
+  if (!dialog || !message || !input || !acceptButton || !cancelButton) {
+    return Promise.resolve(null);
+  }
+
+  message.textContent = options.message;
+  input.hidden = options.inputValue === undefined;
+  input.value = options.inputValue ?? "";
+  dialog.removeAttribute("hidden");
+  (options.inputValue === undefined ? acceptButton : input).focus();
+
+  return new Promise((resolve) => {
+    const close = (value: string | null): void => {
+      dialog.setAttribute("hidden", "");
+      acceptButton.onclick = null;
+      cancelButton.onclick = null;
+      input.onkeydown = null;
+      resolve(value);
+    };
+
+    acceptButton.onclick = () => close(options.inputValue === undefined ? "" : input.value);
+    cancelButton.onclick = () => close(null);
+    input.onkeydown = (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        close(input.value);
+      }
+    };
+  });
 }
 
 function renderGroup(group: StashGroup): HTMLElement {
@@ -119,7 +152,11 @@ function renderGroup(group: StashGroup): HTMLElement {
   restoreAllButton.className = "hub-button";
   restoreAllButton.textContent = "Restore all";
   restoreAllButton.addEventListener("click", async () => {
-    if (!window.confirm(`Restore ${group.tabs.length} tabs?`)) {
+    const accepted = await showDialog({
+      message: `Restore ${group.tabs.length} tabs?`,
+    });
+
+    if (accepted === null) {
       return;
     }
 
@@ -137,7 +174,10 @@ function renderGroup(group: StashGroup): HTMLElement {
   renameButton.className = "hub-button hub-button-secondary";
   renameButton.textContent = "Rename";
   renameButton.addEventListener("click", async () => {
-    const label = window.prompt("Group name", group.label);
+    const label = await showDialog({
+      message: "Group name",
+      inputValue: group.label,
+    });
 
     if (label === null) {
       return;

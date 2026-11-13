@@ -1,4 +1,5 @@
 import { createMessageSender } from "@hub/shared/messaging";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { privacyMessages } from "../../lib/messages";
 import type { PrivacySettings } from "../../lib/types";
@@ -7,17 +8,8 @@ const cookies = document.querySelector<HTMLInputElement>("#cookies");
 const localStorageInput = document.querySelector<HTMLInputElement>("#local-storage");
 const indexedDb = document.querySelector<HTMLInputElement>("#indexed-db");
 const cache = document.querySelector<HTMLInputElement>("#cache");
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const sendMessage = createMessageSender(privacyMessages);
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
 
 async function load(): Promise<void> {
   const response = await sendMessage({
@@ -25,7 +17,7 @@ async function load(): Promise<void> {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
@@ -48,11 +40,11 @@ async function save(): Promise<void> {
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 
-  setStatus("Saved.");
+  statusView.set("Saved.");
 }
 
 [cookies, localStorageInput, indexedDb, cache].forEach((input) => {

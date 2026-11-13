@@ -1,5 +1,6 @@
+import { getActiveTab, injectRuntimeContentScript } from "@hub/shared/injection";
 import { createTabMessageSender } from "@hub/shared/messaging";
-import { browser } from "wxt/browser";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { darkModeMessages } from "../../lib/messages";
 import type { DarkModeSiteState } from "../../lib/types";
@@ -7,34 +8,11 @@ import type { DarkModeSiteState } from "../../lib/types";
 const enabledInput = document.querySelector<HTMLInputElement>("#enabled");
 const strengthInput = document.querySelector<HTMLInputElement>("#strength");
 const siteLabel = document.querySelector<HTMLParagraphElement>("#site");
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const sendMessage = createTabMessageSender(darkModeMessages);
 
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
-
 async function getActiveTabId(): Promise<number | null> {
-  const [tab] = await browser.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
-
-  return tab?.id ?? null;
-}
-
-async function injectContentScript(tabId: number): Promise<void> {
-  await browser.scripting.executeScript({
-    target: {
-      tabId,
-    },
-    files: ["/content-scripts/dark-mode.js"],
-  });
+  return (await getActiveTab()).tabId ?? null;
 }
 
 function renderState(state: DarkModeSiteState): void {
@@ -50,26 +28,31 @@ function renderState(state: DarkModeSiteState): void {
 async function loadSettings(): Promise<void> {
   const tabId = await getActiveTabId();
 
-  if (!tabId || !enabledInput || !strengthInput || !status) {
-    setStatus("No active tab available.", true);
+  if (!tabId || !enabledInput || !strengthInput) {
+    statusView.set("No active tab available.", true);
     return;
   }
 
   try {
-    await injectContentScript(tabId);
+    await injectRuntimeContentScript({
+      file: "/content-scripts/dark-mode.js",
+    });
     const response = await sendMessage(tabId, {
       type: "DARK_MODE_GET_SITE_STATE",
     });
 
     if (!response.ok) {
-      setStatus(response.error.message, true);
+      statusView.set(response.error.message, true);
       return;
     }
 
     renderState(response.data);
-    setStatus("Connected to current tab.");
+    statusView.set("Connected to current tab.");
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "This tab cannot use Dark Mode Lite.", true);
+    statusView.set(
+      error instanceof Error ? error.message : "This tab cannot use Dark Mode Lite.",
+      true,
+    );
   }
 }
 
@@ -77,7 +60,7 @@ async function saveSettings(patch: { enabled?: boolean; strength?: number }): Pr
   const tabId = await getActiveTabId();
 
   if (!tabId) {
-    setStatus("No active tab available.", true);
+    statusView.set("No active tab available.", true);
     return;
   }
 
@@ -87,7 +70,7 @@ async function saveSettings(patch: { enabled?: boolean; strength?: number }): Pr
   });
 
   if (!response.ok) {
-    setStatus(response.error.message, true);
+    statusView.set(response.error.message, true);
     return;
   }
 

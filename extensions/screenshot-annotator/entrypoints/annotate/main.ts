@@ -1,4 +1,5 @@
 import { browser } from "wxt/browser";
+import { createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { drawAnnotation } from "../../lib/annotations";
 import type { AnnotationOperation, Point } from "../../lib/annotations";
@@ -18,21 +19,15 @@ const widthInput = document.querySelector<HTMLInputElement>("#width");
 const undoButton = document.querySelector<HTMLButtonElement>("#undo");
 const copyButton = document.querySelector<HTMLButtonElement>("#copy");
 const downloadButton = document.querySelector<HTMLButtonElement>("#download");
-const status = document.querySelector<HTMLParagraphElement>("#status");
+const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 
 const storage = browser.storage.session;
 const operations: AnnotationOperation[] = [];
 let settings: AnnotationSettings = annotationDefaults;
 let startPoint: Point | null = null;
-
-function setStatus(message: string, isError = false): void {
-  if (!status) {
-    return;
-  }
-
-  status.textContent = message;
-  status.classList.toggle("hub-status-error", isError);
-}
+let draftOperation: AnnotationOperation | null = null;
+let pendingTextPoint: Point | null = null;
+let baseImageDataUrl: string | null = null;
 
 function toCanvasPoint(event: MouseEvent): Point {
   const rect = canvas?.getBoundingClientRect() ?? new DOMRect(0, 0, 0, 0);
@@ -41,6 +36,18 @@ function toCanvasPoint(event: MouseEvent): Point {
     x: event.clientX - rect.left,
     y: event.clientY - rect.top,
   };
+}
+
+function drawDraft(): void {
+  if (!draftOperation) {
+    return;
+  }
+
+  const context = canvas?.getContext("2d");
+
+  if (context) {
+    drawAnnotation(context, draftOperation);
+  }
 }
 
 function redraw(): void {
@@ -60,33 +67,40 @@ function redraw(): void {
   for (const operation of operations) {
     drawAnnotation(context, operation);
   }
+
+  drawDraft();
 }
 
 async function loadImage(): Promise<void> {
-  const result = await storage.get("screenshot-annotator.capture");
-  const dataUrl = result["screenshot-annotator.capture"];
+  if (!canvas) {
+    return;
+  }
 
-  if (!canvas || typeof dataUrl !== "string") {
-    setStatus("No screenshot found. Capture one from the popup.", true);
+  const result = await storage.get("screenshot-annotator.capture");
+  const storedDataUrl = result["screenshot-annotator.capture"];
+
+  if (typeof storedDataUrl === "string") {
+    baseImageDataUrl = storedDataUrl;
+    await storage.remove("screenshot-annotator.capture");
+  }
+
+  if (!baseImageDataUrl) {
+    statusView.set("No screenshot found. Capture one from the popup.", true);
     return;
   }
 
   const image = new Image();
 
   image.onload = () => {
-    if (!canvas) {
-      return;
-    }
-
     const maxWidth = Math.min(1000, window.innerWidth - 64);
     const scale = Math.min(1, maxWidth / image.width);
     canvas.width = Math.round(image.width * scale);
     canvas.height = Math.round(image.height * scale);
     const context = canvas.getContext("2d");
     context?.drawImage(image, 0, 0, canvas.width, canvas.height);
-    setStatus("Loaded. Drag to annotate.");
+    statusView.set("Loaded. Drag to annotate. Press Esc to cancel and Ctrl/Cmd+Z to undo.");
   };
-  image.src = dataUrl;
+  image.src = baseImageDataUrl;
 }
 
 async function loadSettings(): Promise<void> {
@@ -107,14 +121,27 @@ async function saveSettings(): Promise<void> {
 
 async function undo(): Promise<void> {
   operations.pop();
-  await loadImage();
-  operations.forEach((operation) => {
-    const context = canvas?.getContext("2d");
 
-    if (context) {
-      drawAnnotation(context, operation);
+  if (!canvas || !baseImageDataUrl) {
+    return;
+  }
+
+  const image = new Image();
+
+  image.onload = () => {
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return;
     }
-  });
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    operations.forEach((operation) => {
+      drawAnnotation(context, operation);
+    });
+  };
+  image.src = baseImageDataUrl;
 }
 
 async function copyImage(): Promise<void> {
@@ -134,9 +161,9 @@ async function copyImage(): Promise<void> {
         "image/png": blob,
       }),
     ]);
-    setStatus("Copied image.");
+    statusView.set("Copied image.");
   } catch (error) {
-    setStatus(error instanceof Error ? error.message : "Copy failed.", true);
+    statusView.set(error instanceof Error ? error.message : "Copy failed.", true);
   }
 }
 
@@ -149,7 +176,7 @@ async function downloadImage(): Promise<void> {
   link.href = canvas.toDataURL("image/png");
   link.download = `screenshot-annotator-${Date.now()}.png`;
   link.click();
-  setStatus("Downloaded.");
+  statusView.set("Downloaded.");
 }
 
 toolInput?.addEventListener("change", async () => {
@@ -201,13 +228,18 @@ canvas?.addEventListener("mouseup", async (event) => {
   let text: string | undefined;
 
   if (settings.tool === "text") {
-    text = window.prompt("Annotation text") ?? "";
-    startPoint = endPoint;
+    pendingTextPoint = endPoint;
+    const dialog = document.querySelector<HTMLDivElement>("#text-dialog");
+    const input = document.querySelector<HTMLInputElement>("#annotation-text");
 
-    if (!text) {
-      startPoint = null;
-      return;
+    if (dialog && input) {
+      dialog.removeAttribute("hidden");
+      input.value = "";
+      input.focus();
     }
+
+    startPoint = null;
+    return;
   }
 
   operations.push({
@@ -219,8 +251,91 @@ canvas?.addEventListener("mouseup", async (event) => {
     strokeWidth: settings.strokeWidth,
   });
   startPoint = null;
+  draftOperation = null;
   redraw();
 });
+
+canvas?.addEventListener("mousemove", (event) => {
+  if (!startPoint) {
+    return;
+  }
+
+  const point = toCanvasPoint(event as MouseEvent);
+
+  if (settings.tool === "brush") {
+    draftOperation = {
+      type: "brush",
+      start: startPoint,
+      end: point,
+      color: settings.color,
+      strokeWidth: settings.strokeWidth,
+    };
+    startPoint = point;
+    redraw();
+    return;
+  }
+
+  if (settings.tool === "rectangle" || settings.tool === "arrow") {
+    draftOperation = {
+      type: settings.tool,
+      start: startPoint,
+      end: point,
+      color: settings.color,
+      strokeWidth: settings.strokeWidth,
+    };
+    redraw();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    startPoint = null;
+    draftOperation = null;
+    redraw();
+  }
+
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+    event.preventDefault();
+    void undo();
+  }
+});
+
+async function saveTextAnnotation(): Promise<void> {
+  const input = document.querySelector<HTMLInputElement>("#annotation-text");
+  const dialog = document.querySelector<HTMLDivElement>("#text-dialog");
+  const text = input?.value.trim();
+
+  if (!pendingTextPoint || !text || !canvas) {
+    dialog?.setAttribute("hidden", "");
+    pendingTextPoint = null;
+    return;
+  }
+
+  operations.push({
+    type: "text",
+    start: pendingTextPoint,
+    end: pendingTextPoint,
+    text,
+    color: settings.color,
+    strokeWidth: settings.strokeWidth,
+  });
+  pendingTextPoint = null;
+  dialog?.setAttribute("hidden", "");
+  redraw();
+}
+
+document.querySelector<HTMLButtonElement>("#save-text")?.addEventListener("click", () => {
+  void saveTextAnnotation();
+});
+
+document
+  .querySelector<HTMLInputElement>("#annotation-text")
+  ?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void saveTextAnnotation();
+    }
+  });
 
 void loadSettings();
 void loadImage();
