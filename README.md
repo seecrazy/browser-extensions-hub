@@ -1,51 +1,62 @@
 # Browser Extensions Hub
 
-A `pnpm workspaces + WXT + TypeScript` monorepo for Manifest V3 browser extensions. The repository currently contains one reusable template and ten independently buildable, independently releasable plugins.
+[![CI](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/codeql.yml/badge.svg)](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/codeql.yml)
 
-## Principles
+A privacy-first browser-extension monorepo built with **pnpm workspaces**, **WXT**, and **TypeScript**. It contains one reusable template and ten independently buildable, independently releasable Manifest V3 plugins for Chrome and Firefox.
 
-- **MV3 first** — every extension targets Manifest V3.
-- **Minimum permissions** — page-level features use `activeTab + scripting`; broad host permissions are rejected.
-- **Independent plugins** — plugins do not depend on each other; shared code lives in `@hub/shared`.
-- **Validate artifacts** — manifest checks inspect WXT output, not source declarations.
-- **Local-first** — no accounts, cloud sync, or telemetry.
-- **Typed contracts** — each plugin declares its message payload and response types once.
+## Highlights
 
-## Status
+- **MV3 only** — Chrome MV3 and Firefox 142+ builds.
+- **Local-first** — no accounts, telemetry, cloud sync, ads, or data selling.
+- **Minimum permissions** — broad host permissions and `clipboardRead` are rejected.
+- **Independent plugins** — no cross-plugin dependencies; shared code stays in `@hub/shared`.
+- **Artifact-first validation** — manifest checks inspect generated WXT output, not source claims.
+- **Typed contracts** — messages, settings, and release tags are checked.
+- **Store-ready workflow** — manifest validation, Firefox lint, dependency audit, QA checklists, release artifacts, and checksums.
 
-| Plugin          | Entrypoints                               | Current capability                                        |
-| --------------- | ----------------------------------------- | --------------------------------------------------------- |
-| Template        | popup, background                         | Minimal WXT starter with typed messages                   |
-| Dark Mode Lite  | popup, runtime content script             | Per-site dark mode with strength control                  |
-| Tab Stash       | popup, background, options                | Named groups, search, restore, JSON import/export         |
-| Volume Booster  | popup, runtime content script             | Up to 300% Web Audio gain, dynamic media, per-site memory |
-| Quick Translate | popup, background, runtime content script | Selection bubble, cache, timeout, copy, RTL support       |
-| Focus Lock      | background, options, blocked page         | Local DNR blocklist, per-domain unlock, import/export     |
+## Plugin catalog
 
-Completed:
+| Plugin                                                            | Focus                                                    | Entrypoints                               | Permissions                                                |
+| ----------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------- |
+| [Template](extensions/_template/PLUGIN.md)                        | Starter for new plugins                                  | popup, background                         | `storage`                                                  |
+| [Dark Mode Lite](extensions/dark-mode-lite/PLUGIN.md)             | Per-site dark mode and strength                          | popup, runtime content script             | `activeTab`, `scripting`, `storage`                        |
+| [Tab Stash](extensions/tab-stash/PLUGIN.md)                       | Named tab groups, search, restore, JSON backup           | popup, background, options                | `tabs`, `storage`                                          |
+| [Volume Booster](extensions/volume-booster/PLUGIN.md)             | Up to 300% Web Audio gain, dynamic media                 | popup, runtime content script             | `activeTab`, `scripting`, `storage`                        |
+| [Quick Translate](extensions/quick-translate/PLUGIN.md)           | Selection bubble, cache, timeout, copy, RTL              | popup, background, runtime content script | `activeTab`, `scripting`, `storage`, Google Translate host |
+| [Focus Lock](extensions/focus-lock/PLUGIN.md)                     | Local DNR blocklist and per-domain unlock                | background, options, blocked page         | `declarativeNetRequest`, `storage`, `alarms`               |
+| [New Tab Dashboard](extensions/newtab-dashboard/PLUGIN.md)        | Local time, todos, shortcuts; no search override         | newtab, background                        | `storage`                                                  |
+| [Privacy Cleaner](extensions/privacy-cleaner/PLUGIN.md)           | Manual per-origin storage cleanup                        | popup, background, options                | `activeTab`, `browsingData`, `storage`                     |
+| [Reading Progress](extensions/reading-progress/PLUGIN.md)         | Per-site progress bar with offset controls               | popup, runtime content script             | `activeTab`, `scripting`, `storage`                        |
+| [Clipboard History](extensions/clipboard-history-lite/PLUGIN.md)  | Last 50 explicit copies with expiry and site controls    | popup, runtime content script             | `activeTab`, `scripting`, `storage`, `clipboardWrite`      |
+| [Screenshot Annotator](extensions/screenshot-annotator/PLUGIN.md) | Local capture plus rectangle/arrow/text/brush annotation | popup, annotate, background               | `activeTab`, `storage`, `clipboardWrite`                   |
 
-- Chrome MV3 and Firefox MV3 builds.
-- Manifest validation, Vitest unit tests, ESLint, Prettier, Firefox lint, and dependency audit.
-- Contract-driven messaging and plugin-local `lib/` modules.
-- Generated flat extension icons.
-- Store listing, permission, and privacy document skeletons.
-- Ten-plugin architecture coverage across NTP, browsing data, content scripts, clipboard, and canvas pages.
-- Release artifact and signing workflow.
+Each plugin has a local `PLUGIN.md` with scope, permissions, constraints, and QA references.
 
-Still required before store submission:
+## Architecture
 
-- manual browser acceptance;
-- real store screenshots;
-- product/design review of generated icons;
-- Google Translate endpoint verification;
-- real Chrome Web Store and AMO submissions.
+```text
+extensions/<plugin>/
+├── entrypoints/          Browser surfaces: popup, background, content, options, pages
+├── lib/                  Plugin-local types, settings, contracts, and pure logic
+├── public/               Static assets and icons
+└── PLUGIN.md             Scope, permissions, QA, constraints
 
-## Quick start
+packages/
+├── shared/               Contract messaging, namespaced storage, injection, shared UI
+├── eslint-config/         Shared ESLint configuration
+└── tsconfig/              Shared TypeScript configuration
+```
 
-Requirements:
+`@hub/shared` is bundled into each extension by WXT. Published extensions do not depend on npm at runtime.
+
+## Requirements
 
 - Node.js `22.12.0`
 - pnpm `9.15.9`
+- Chromium-based browser and/or Firefox 142+
+
+## Quick start
 
 ```bash
 corepack enable
@@ -54,27 +65,30 @@ pnpm install
 pnpm build
 ```
 
-Develop a plugin:
+Build one target:
 
 ```bash
-pnpm dev:dark-mode-lite
-pnpm dev:tab-stash
-pnpm dev:volume-booster
-pnpm dev:quick-translate
-pnpm dev:focus-lock
-```
-
-## Build and verify
-
-`pnpm build` builds Chrome MV3 and Firefox MV3:
-
-```bash
-pnpm build
 pnpm build:chrome
 pnpm build:firefox
 ```
 
-Full local check:
+Build one plugin:
+
+```bash
+pnpm --filter @hub/dark-mode-lite build:chrome
+pnpm --filter @hub/dark-mode-lite build:firefox
+```
+
+Run one plugin in development:
+
+```bash
+pnpm --filter @hub/dark-mode-lite dev
+pnpm --filter @hub/newtab-dashboard dev
+```
+
+## Quality gates
+
+Run the main suite:
 
 ```bash
 pnpm typecheck
@@ -86,7 +100,25 @@ pnpm validate:store-readiness --allow-incomplete
 pnpm audit --prod
 ```
 
-E2E tests are separate and use Chromium:
+Useful validation variants:
+
+```bash
+pnpm validate:manifests --plugin dark-mode-lite --browser firefox
+pnpm validate:store-readiness --plugin dark-mode-lite --browser chrome --allow-incomplete
+```
+
+The store-readiness check currently uses `--allow-incomplete` because real screenshots are still pending. Without that flag, unchecked screenshot items fail validation.
+
+## Testing
+
+| Command                                                                       | Scope                                       |
+| ----------------------------------------------------------------------------- | ------------------------------------------- |
+| `pnpm test`                                                                   | Fast unit tests for shared and plugin logic |
+| `pnpm test:coverage`                                                          | Unit tests with V8 coverage                 |
+| `pnpm exec web-ext lint --source-dir extensions/<plugin>/.output/firefox-mv3` | Firefox add-on lint                         |
+| `pnpm test:e2e`                                                               | Playwright browser-level smoke tests        |
+
+E2E tests require a Chromium browser:
 
 ```bash
 pnpm build
@@ -94,40 +126,18 @@ pnpm test:e2e:install
 pnpm test:e2e
 ```
 
-Coverage:
+On Linux CI, run E2E under Xvfb:
 
 ```bash
-pnpm test:coverage
-```
-
-Manifest validation checks the built output and supports a single plugin or browser:
-
-```bash
-pnpm validate:manifests --plugin dark-mode-lite --browser firefox
-```
-
-It verifies:
-
-- Manifest V3;
-- plugin package and version consistency;
-- Firefox `gecko.id` and data-collection declaration;
-- Chrome service-worker background when present;
-- forbidden permissions and broad host patterns;
-- icons, popup, options, and content-script files;
-- required name and description.
-
-Firefox source can be linted with:
-
-```bash
-pnpm exec web-ext lint --source-dir extensions/<plugin>/.output/firefox-mv3
+xvfb-run --auto-servernum pnpm test:e2e
 ```
 
 ## Local loading
 
-### Chromium browsers
+### Chromium
 
 1. Open `chrome://extensions`.
-2. Enable Developer mode.
+2. Enable **Developer mode**.
 3. Choose **Load unpacked**.
 4. Load `extensions/<plugin>/.output/chrome-mv3`.
 
@@ -135,119 +145,7 @@ pnpm exec web-ext lint --source-dir extensions/<plugin>/.output/firefox-mv3
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Choose **Load Temporary Add-on**.
-3. Load `extensions/<plugin>/.output/firefox-mv3/manifest.json`.
-
-## Extension behavior
-
-### Dark Mode Lite
-
-- Applies CSS inversion to the current origin.
-- Stores per-site enabled state and strength.
-- Compensates images, video, canvas, SVG, and iframes.
-- Requires reopening the popup after page reload because injection is activeTab-based.
-
-### Tab Stash
-
-- Saves stashable tabs to a named local group before closing them.
-- Supports search, rename, restore-one, restore-all, delete, and JSON import/export.
-- Detects duplicate URLs.
-- Uses `tabs` and `storage`; no host permissions.
-
-### Volume Booster
-
-- Uses `MediaElementAudioSourceNode -> GainNode -> destination` above 100%.
-- Keeps a per-site volume level.
-- Re-applies volume when media elements are added dynamically.
-- Reports unsupported non-CORS cross-origin media instead of silently muting audio.
-
-### Quick Translate
-
-- Activates only on the tab selected from the popup.
-- Uses selection-change debounce and a memory cache.
-- Sends translation requests from background with an AbortController timeout.
-- Renders the result in Shadow DOM with copy support and RTL handling.
-- Sends selected text to Google Translate; this is disclosed in the listing.
-
-### Focus Lock
-
-- Redirects blocked domains to `/blocked.html?domain=<domain>` with DNR.
-- Supports per-domain five-minute unlock.
-- Supports 60-second cooldown when no password is configured.
-- Stores password as PBKDF2/SHA-256 hash and salt only.
-- Supports domain JSON import/export.
-
-### New Tab Dashboard
-
-- Replaces the new tab page with local time, todos, and shortcuts.
-- Does not request `search` or `settings`.
-- Does not modify search settings or render remote content.
-
-### Privacy Cleaner
-
-- Cleans only the origin visible in the active tab.
-- Requires an explicit click.
-- Supports cookies, local storage, IndexedDB, and optional cache.
-- Does not request `tabs` or perform automatic cleanup.
-
-### Reading Progress
-
-- Injects a fixed progress bar on demand.
-- Uses rAF-throttled scroll updates.
-- Stores per-site color, height, position, and enabled state.
-
-### Clipboard History
-
-- Captures only explicit `copy` events.
-- Does not request `clipboardRead`.
-- Stores up to 50 local text items.
-- Supports search, copy, delete, and clear.
-
-### Screenshot Annotator
-
-- Captures the visible tab only after a popup click.
-- Keeps capture data in session storage.
-- Supports rectangle, arrow, and text annotations.
-- Supports undo, copy, and local download.
-
-## Permissions
-
-| Plugin               | Permissions                                           | Host permissions                     |
-| -------------------- | ----------------------------------------------------- | ------------------------------------ |
-| Dark Mode Lite       | `activeTab`, `scripting`, `storage`                   | none                                 |
-| Tab Stash            | `tabs`, `storage`                                     | none                                 |
-| Volume Booster       | `activeTab`, `scripting`, `storage`                   | none                                 |
-| Quick Translate      | `activeTab`, `scripting`, `storage`                   | `https://translate.googleapis.com/*` |
-| Focus Lock           | `declarativeNetRequest`, `storage`, `alarms`          | none                                 |
-| New Tab Dashboard    | `storage`                                             | none                                 |
-| Privacy Cleaner      | `activeTab`, `browsingData`, `storage`                | none                                 |
-| Reading Progress     | `activeTab`, `scripting`, `storage`                   | none                                 |
-| Clipboard History    | `activeTab`, `scripting`, `storage`, `clipboardWrite` | none                                 |
-| Screenshot Annotator | `activeTab`, `storage`, `clipboardWrite`              | none                                 |
-
-Per-plugin store text and privacy summaries are under `docs/listings/<plugin>/`.
-
-## Architecture
-
-```text
-packages/shared/src/
-├── messaging.ts
-├── storage.ts
-└── ui/
-```
-
-Each plugin has a local `lib/` layer:
-
-```text
-extensions/<plugin>/lib/
-├── types.ts
-├── settings.ts
-├── messages.ts
-└── pure-logic.ts
-```
-
-`entrypoints/` wires browser APIs and UI; `lib/` contains reusable, testable logic. Message contracts are declared once and consumed by popup, background, and content script through `@hub/shared/messaging`.
-
-WXT bundles `@hub/shared` into each extension, so published zips and xpi files do not depend on npm at runtime.
+3. Select `extensions/<plugin>/.output/firefox-mv3/manifest.json`.
 
 ## Add a plugin
 
@@ -255,14 +153,18 @@ WXT bundles `@hub/shared` into each extension, so published zips and xpi files d
 cp -R extensions/_template extensions/my-plugin
 ```
 
-1. Change `package.json` name to `@hub/my-plugin`.
-2. Update `wxt.config.ts`, permissions, Firefox gecko id, and data-collection declaration.
-3. Add message and settings contracts under `lib/`.
-4. Add listing documents under `docs/listings/my-plugin/`.
-5. Run `pnpm install`.
-6. Pass all checks from the build and verification section.
+Then:
 
-Manifest validation discovers plugins by directory, so a new plugin does not need to be appended to a hardcoded list.
+1. Change `package.json` to `@hub/my-plugin`.
+2. Update `wxt.config.ts` with real name, description, permissions, Firefox gecko id, and data-collection declaration.
+3. Add plugin-local types, settings, and message contracts under `lib/`.
+4. Add `PLUGIN.md`.
+5. Add Chrome/Firefox listing, privacy, permissions, and screenshot docs under `docs/listings/my-plugin/`.
+6. Add `docs/qa/my-plugin.md`.
+7. Run `pnpm install`.
+8. Pass all quality gates.
+
+Manifest validation discovers plugin directories automatically.
 
 ## Release
 
@@ -283,38 +185,51 @@ git push origin dark-mode-lite@0.1.0
 The release workflow:
 
 1. validates tag, directory, package name, and version;
-2. builds Chrome and Firefox;
-3. validates and lints the built extension;
-4. packs Chrome zip, Firefox zip, Firefox source zip, and SHA256SUMS;
-5. uploads Chrome draft with pinned CLI when secrets are present;
-6. signs Firefox from downloaded artifact and uploads the signed xpi;
-7. creates a GitHub Release using the signed Firefox artifact when available.
+2. builds Chrome MV3 and Firefox MV3;
+3. validates and lints the selected plugin;
+4. packs Chrome zip, Firefox zip, Firefox source zip, and `SHA256SUMS`;
+5. uploads a Chrome draft when Chrome secrets are present;
+6. signs Firefox from downloaded artifacts when AMO secrets are present;
+7. creates a GitHub Release with signed Firefox artifacts when available.
+
+Publish jobs use protected GitHub environments:
+
+- `chrome-publish`
+- `firefox-publish`
 
 See [`docs/operations/release-checklist.md`](docs/operations/release-checklist.md).
 
-### Store secrets
+## Current status
 
-Chrome:
+### Done
 
-```text
-CHROME_CLIENT_ID
-CHROME_CLIENT_SECRET
-CHROME_REFRESH_TOKEN
-DARK_MODE_LITE_CHROME_EXTENSION_ID
-TAB_STASH_CHROME_EXTENSION_ID
-VOLUME_BOOSTER_CHROME_EXTENSION_ID
-QUICK_TRANSLATE_CHROME_EXTENSION_ID
-FOCUS_LOCK_CHROME_EXTENSION_ID
-```
+- Ten plugins covering NTP, content scripts, background workers, options pages, DNR, media, clipboard, and canvas workflows.
+- Chrome MV3 and Firefox MV3 builds.
+- Shared messaging, storage, injection, and UI helpers.
+- Unit tests, coverage, lint, format, Firefox lint, dependency audit, and dependency review.
+- Manifest and store-readiness validators.
+- Release artifacts, source archive, signing flow, checksums, and smoke checks.
+- Per-plugin documentation and QA checklists.
 
-Firefox:
+### Not done yet
 
-```text
-AMO_JWT_ISSUER
-AMO_JWT_SECRET
-```
+- Real store screenshots.
+- Final product/design review of generated icons.
+- Full manual browser QA for every plugin.
+- Real Google Translate endpoint verification.
+- Chrome Web Store and AMO submissions.
+- Plugin-specific release notes.
 
-Missing store secrets skip store publishing but do not prevent GitHub Release artifacts.
+## Privacy and compliance
+
+- No analytics, accounts, telemetry, advertising, cloud storage, or data selling.
+- Plugin settings and stashes remain local.
+- Page-level features use `activeTab` and runtime injection rather than broad host permissions.
+- New Tab Dashboard does not override search settings and has no search box.
+- Privacy Cleaner only performs user-triggered per-origin cleanup.
+- Clipboard History does not request `clipboardRead`; it records only explicit `copy` events.
+- Screenshot Annotator clears session screenshot data after loading it.
+- Quick Translate sends selected text to Google Translate for translation; this is disclosed in its listing and privacy docs.
 
 ## Documentation
 
@@ -324,12 +239,10 @@ Missing store secrets skip store publishing but do not prevent GitHub Release ar
 - Handoff: [`HANDOFF.md`](HANDOFF.md)
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Security: [`SECURITY.md`](SECURITY.md)
-- Listings: [`docs/listings`](docs/listings)
+- Store listings: [`docs/listings`](docs/listings)
+- QA checklists: [`docs/qa`](docs/qa)
 - Release checklist: [`docs/operations/release-checklist.md`](docs/operations/release-checklist.md)
 
-## Privacy
+## License
 
-- No analytics, accounts, telemetry, or data selling.
-- Settings and stashes remain local.
-- Focus Lock keeps only a password hash and salt, never a plaintext password.
-- Quick Translate sends selected text to Google Translate for translation.
+See [`LICENSE`](LICENSE).
