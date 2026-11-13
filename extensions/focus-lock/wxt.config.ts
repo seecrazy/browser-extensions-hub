@@ -1,0 +1,20 @@
+import { defineConfig } from "wxt";
+
+export default defineConfig({
+  manifestVersion: 3,
+  manifest: {
+    name: "Focus Lock",
+    short_name: "Focus Lock",
+    description: "Block distracting domains locally. Unlock with a password or a short cooldown.",
+    permissions: ["declarativeNetRequest", "storage", "alarms"],
+    options_ui: {
+      open_in_tab: true,
+    },
+    browser_specific_settings: {
+      gecko: {
+        id: "focus-lock@browser-extensions-hub.local",
+        strict_min_version: "115.0",
+      },
+    },
+  },
+});

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Lock settings</title>
+  </head>
+  <body>
+    <main class="hub-page">
+      <h1 class="hub-title">Focus Lock settings</h1>
+      <section class="hub-card">
+        <h2>Blocked domains</h2>
+        <form id="domain-form">
+          <input id="domain" class="hub-input" placeholder="example.com" required />
+          <button type="submit" class="hub-button">Add domain</button>
+        </form>
+        <ul id="domains" class="hub-list"></ul>
+      </section>
+      <section class="hub-card">
+        <h2>Password</h2>
+        <form id="password-form" class="hub-column">
+          <input
+            id="current-password"
+            type="password"
+            class="hub-input"
+            placeholder="Current password"
+          />
+          <input
+            id="new-password"
+            type="password"
+            class="hub-input"
+            placeholder="New password"
+            required
+          />
+          <button type="submit" class="hub-button">Save password</button>
+        </form>
+        <p id="password-status" class="hub-status"></p>
+      </section>
+      <p id="status" class="hub-status"></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

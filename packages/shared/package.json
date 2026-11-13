@@ -1,0 +1,21 @@
+{
+  "name": "@hub/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./messaging": "./src/messaging.ts",
+    "./storage": "./src/storage.ts",
+    "./ui": "./src/ui/index.ts",
+    "./ui/styles.css": "./src/ui/styles.css"
+  },
+  "devDependencies": {
+    "@hub/tsconfig": "workspace:*",
+    "typescript": "5.6.3"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  }
+}

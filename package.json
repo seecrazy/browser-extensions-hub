@@ -1,0 +1,35 @@
+{
+  "name": "browser-extensions-hub",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "pnpm -r run build:chrome && pnpm -r run build:firefox",
+    "build:chrome": "pnpm -r run build:chrome",
+    "build:firefox": "pnpm -r run build:firefox",
+    "dev": "echo 'Use: pnpm dev:<plugin>'; exit 1",
+    "dev:dark-mode-lite": "pnpm --filter @hub/dark-mode-lite dev",
+    "dev:tab-stash": "pnpm --filter @hub/tab-stash dev",
+    "dev:volume-booster": "pnpm --filter @hub/volume-booster dev",
+    "dev:quick-translate": "pnpm --filter @hub/quick-translate dev",
+    "dev:focus-lock": "pnpm --filter @hub/focus-lock dev",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "validate:manifests": "node --experimental-strip-types scripts/validate-manifests.ts",
+    "validate:release-tag": "node --experimental-strip-types scripts/validate-release-tag.ts"
+  },
+  "devDependencies": {
+    "@hub/eslint-config": "workspace:*",
+    "@types/chrome": "0.0.280",
+    "eslint": "9.14.0",
+    "pnpm": "9.15.9",
+    "prettier": "3.3.3",
+    "typescript": "5.6.3"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "extends": "@hub/tsconfig/tsconfig.extension.json",
+  "include": ["entrypoints/**/*.ts", "components/**/*.ts", "utils/**/*.ts", ".wxt/types/**/*"]
+}

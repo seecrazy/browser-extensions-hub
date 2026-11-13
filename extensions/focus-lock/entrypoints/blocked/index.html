@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blocked by Focus Lock</title>
+  </head>
+  <body>
+    <main class="hub-page">
+      <h1 class="hub-title">This site is blocked</h1>
+      <p>This domain is on your local Focus Lock blocklist.</p>
+      <div id="password-area" class="hub-card">
+        <input id="password" type="password" class="hub-input" placeholder="Password" />
+        <button id="unlock" class="hub-button">Unlock for 5 minutes</button>
+      </div>
+      <div id="cooldown-area" class="hub-card">
+        <button id="cooldown" class="hub-button">Wait 60 seconds</button>
+      </div>
+      <p id="status" class="hub-status"></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
