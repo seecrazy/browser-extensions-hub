@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Annotate screenshot</title>
+  </head>
+  <body>
+    <main class="hub-page">
+      <h1 class="hub-title">Annotate screenshot</h1>
+      <div class="hub-card">
+        <div class="hub-row">
+          <label class="hub-label" for="tool">Tool</label>
+          <select id="tool" class="hub-select">
+            <option value="rectangle">Rectangle</option>
+            <option value="arrow">Arrow</option>
+            <option value="text">Text</option>
+          </select>
+          <label class="hub-label" for="color">Color</label>
+          <input id="color" type="color" value="#dc2626" />
+          <label class="hub-label" for="width">Width</label>
+          <input id="width" type="range" min="1" max="16" value="4" />
+          <button id="undo" class="hub-button hub-button-secondary">Undo</button>
+          <button id="copy" class="hub-button">Copy</button>
+          <button id="download" class="hub-button hub-button-secondary">Download</button>
+        </div>
+        <p id="status" class="hub-status"></p>
+      </div>
+      <canvas id="canvas"></canvas>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

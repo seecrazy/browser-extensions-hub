@@ -55,6 +55,22 @@ importers:
         specifier: 0.20.0
         version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
 
+  extensions/clipboard-history-lite:
+    dependencies:
+      '@hub/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@hub/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+      wxt:
+        specifier: 0.20.0
+        version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
+
   extensions/dark-mode-lite:
     dependencies:
       '@hub/shared':
@@ -87,7 +103,71 @@ importers:
         specifier: 0.20.0
         version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
 
+  extensions/newtab-dashboard:
+    dependencies:
+      '@hub/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@hub/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+      wxt:
+        specifier: 0.20.0
+        version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
+
+  extensions/privacy-cleaner:
+    dependencies:
+      '@hub/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@hub/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+      wxt:
+        specifier: 0.20.0
+        version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
+
   extensions/quick-translate:
+    dependencies:
+      '@hub/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@hub/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+      wxt:
+        specifier: 0.20.0
+        version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
+
+  extensions/reading-progress:
+    dependencies:
+      '@hub/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@hub/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+      wxt:
+        specifier: 0.20.0
+        version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
+
+  extensions/screenshot-annotator:
     dependencies:
       '@hub/shared':
         specifier: workspace:*

@@ -45,6 +45,9 @@ type Manifest = {
     page?: string;
   };
   icons?: Record<string, string>;
+  chrome_url_overrides?: {
+    newtab?: string;
+  };
   browser_specific_settings?: {
     gecko?: {
       id?: string;
@@ -178,6 +181,14 @@ function validateManifest(browserTarget: BrowserTarget, plugin: string): void {
 
     if (!existsSync(resolvedPath)) {
       errors.push(`icon ${size} is missing: ${iconPath}`);
+    }
+  }
+
+  if (manifest.chrome_url_overrides?.newtab) {
+    const newtabPath = path.join(outputDir, manifest.chrome_url_overrides.newtab);
+
+    if (!existsSync(newtabPath)) {
+      errors.push(`new tab page file is missing: ${manifest.chrome_url_overrides.newtab}`);
     }
   }
 

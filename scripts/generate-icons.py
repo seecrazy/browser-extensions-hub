@@ -94,6 +94,57 @@ def draw_focus_lock() -> None:
     save(image, "focus-lock")
 
 
+
+def draw_newtab_dashboard() -> None:
+    image, draw = base((37, 99, 235, 255))
+    draw.rounded_rectangle((80, 100, 232, 220), radius=24, fill="white")
+    draw.rounded_rectangle((280, 100, 432, 220), radius=24, fill=(191, 219, 254, 255))
+    draw.rounded_rectangle((80, 252, 432, 412), radius=24, fill="white")
+    draw.rounded_rectangle((112, 292, 200, 316), radius=10, fill=(37, 99, 235, 255))
+    draw.rounded_rectangle((112, 336, 268, 356), radius=10, fill=(148, 163, 184, 255))
+    draw.rounded_rectangle((112, 372, 244, 392), radius=10, fill=(148, 163, 184, 255))
+    save(image, "newtab-dashboard")
+
+
+def draw_privacy_cleaner() -> None:
+    image, draw = base((15, 118, 110, 255))
+    draw.ellipse((140, 120, 372, 352), outline="white", width=34)
+    draw.arc((170, 150, 342, 322), start=100, end=260, fill=(153, 246, 228, 255), width=28)
+    draw.rounded_rectangle((212, 218, 300, 246), radius=10, fill="white")
+    draw.rounded_rectangle((212, 274, 336, 298), radius=10, fill=(153, 246, 228, 255))
+    save(image, "privacy-cleaner")
+
+
+def draw_reading_progress() -> None:
+    image, draw = base((217, 119, 6, 255))
+    draw.rounded_rectangle((84, 132, 428, 380), radius=32, fill="white")
+    draw.rounded_rectangle((112, 176, 400, 196), radius=10, fill=(217, 119, 6, 255))
+    draw.rounded_rectangle((112, 224, 352, 244), radius=10, fill=(253, 186, 116, 255))
+    draw.rounded_rectangle((112, 272, 312, 292), radius=10, fill=(253, 186, 116, 255))
+    draw.rounded_rectangle((112, 320, 240, 340), radius=10, fill=(253, 186, 116, 255))
+    save(image, "reading-progress")
+
+
+def draw_clipboard_history() -> None:
+    image, draw = base((79, 70, 229, 255))
+    draw.rounded_rectangle((140, 112, 372, 400), radius=34, fill="white")
+    draw.rounded_rectangle((196, 76, 316, 132), radius=24, fill=(224, 231, 255, 255))
+    draw.rounded_rectangle((176, 188, 336, 216), radius=10, fill=(79, 70, 229, 255))
+    draw.rounded_rectangle((176, 246, 336, 274), radius=10, fill=(165, 180, 252, 255))
+    draw.rounded_rectangle((176, 304, 300, 332), radius=10, fill=(165, 180, 252, 255))
+    save(image, "clipboard-history-lite")
+
+
+def draw_screenshot_annotator() -> None:
+    image, draw = base((190, 24, 93, 255))
+    draw.rounded_rectangle((80, 116, 432, 340), radius=30, fill="white")
+    draw.rounded_rectangle((128, 160, 240, 236), radius=12, outline=(190, 24, 93, 255), width=14)
+    draw.line((268, 276, 364, 184), fill=(190, 24, 93, 255), width=20)
+    draw.polygon((376, 166, 398, 214, 344, 200), fill=(190, 24, 93, 255))
+    draw.rounded_rectangle((124, 364, 388, 416), radius=16, fill=(251, 207, 232, 255))
+    save(image, "screenshot-annotator")
+
+
 def main() -> None:
     draw_template()
     draw_dark_mode()
@@ -101,6 +152,11 @@ def main() -> None:
     draw_volume_booster()
     draw_quick_translate()
     draw_focus_lock()
+    draw_newtab_dashboard()
+    draw_privacy_cleaner()
+    draw_reading_progress()
+    draw_clipboard_history()
+    draw_screenshot_annotator()
 
 
 if __name__ == "__main__":

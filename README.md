@@ -1,6 +1,6 @@
 # Browser Extensions Hub
 
-A `pnpm workspaces + WXT + TypeScript` monorepo for Manifest V3 browser extensions. The repository currently contains one reusable template and five independently buildable, independently releasable plugins.
+A `pnpm workspaces + WXT + TypeScript` monorepo for Manifest V3 browser extensions. The repository currently contains one reusable template and ten independently buildable, independently releasable plugins.
 
 ## Principles
 
@@ -29,6 +29,7 @@ Completed:
 - Contract-driven messaging and plugin-local `lib/` modules.
 - Generated flat extension icons.
 - Store listing, permission, and privacy document skeletons.
+- Ten-plugin architecture coverage across NTP, browsing data, content scripts, clipboard, and canvas pages.
 - Release artifact and signing workflow.
 
 Still required before store submission:
@@ -160,15 +161,53 @@ pnpm exec web-ext lint --source-dir extensions/<plugin>/.output/firefox-mv3
 - Stores password as PBKDF2/SHA-256 hash and salt only.
 - Supports domain JSON import/export.
 
+### New Tab Dashboard
+
+- Replaces the new tab page with local time, todos, and shortcuts.
+- Does not request `search` or `settings`.
+- Does not modify search settings or render remote content.
+
+### Privacy Cleaner
+
+- Cleans only the origin visible in the active tab.
+- Requires an explicit click.
+- Supports cookies, local storage, IndexedDB, and optional cache.
+- Does not request `tabs` or perform automatic cleanup.
+
+### Reading Progress
+
+- Injects a fixed progress bar on demand.
+- Uses rAF-throttled scroll updates.
+- Stores per-site color, height, position, and enabled state.
+
+### Clipboard History
+
+- Captures only explicit `copy` events.
+- Does not request `clipboardRead`.
+- Stores up to 50 local text items.
+- Supports search, copy, delete, and clear.
+
+### Screenshot Annotator
+
+- Captures the visible tab only after a popup click.
+- Keeps capture data in session storage.
+- Supports rectangle, arrow, and text annotations.
+- Supports undo, copy, and local download.
+
 ## Permissions
 
-| Plugin          | Permissions                                  | Host permissions                     |
-| --------------- | -------------------------------------------- | ------------------------------------ |
-| Dark Mode Lite  | `activeTab`, `scripting`, `storage`          | none                                 |
-| Tab Stash       | `tabs`, `storage`                            | none                                 |
-| Volume Booster  | `activeTab`, `scripting`, `storage`          | none                                 |
-| Quick Translate | `activeTab`, `scripting`, `storage`          | `https://translate.googleapis.com/*` |
-| Focus Lock      | `declarativeNetRequest`, `storage`, `alarms` | none                                 |
+| Plugin               | Permissions                                           | Host permissions                     |
+| -------------------- | ----------------------------------------------------- | ------------------------------------ |
+| Dark Mode Lite       | `activeTab`, `scripting`, `storage`                   | none                                 |
+| Tab Stash            | `tabs`, `storage`                                     | none                                 |
+| Volume Booster       | `activeTab`, `scripting`, `storage`                   | none                                 |
+| Quick Translate      | `activeTab`, `scripting`, `storage`                   | `https://translate.googleapis.com/*` |
+| Focus Lock           | `declarativeNetRequest`, `storage`, `alarms`          | none                                 |
+| New Tab Dashboard    | `storage`                                             | none                                 |
+| Privacy Cleaner      | `activeTab`, `browsingData`, `storage`                | none                                 |
+| Reading Progress     | `activeTab`, `scripting`, `storage`                   | none                                 |
+| Clipboard History    | `activeTab`, `scripting`, `storage`, `clipboardWrite` | none                                 |
+| Screenshot Annotator | `activeTab`, `storage`, `clipboardWrite`              | none                                 |
 
 Per-plugin store text and privacy summaries are under `docs/listings/<plugin>/`.
 
@@ -271,6 +310,7 @@ Missing store secrets skip store publishing but do not prevent GitHub Release ar
 - Contributing: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Security: [`SECURITY.md`](SECURITY.md)
 - Listings: [`docs/listings`](docs/listings)
+- Release checklist: [`docs/operations/release-checklist.md`](docs/operations/release-checklist.md)
 
 ## Privacy
 

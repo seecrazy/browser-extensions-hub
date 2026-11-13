@@ -840,3 +840,70 @@ Iteration 2 replaces 1×1 placeholders with deterministic flat PNG icons generat
 ## 9. Store documentation
 
 Store copy is source-controlled under `docs/listings/<plugin>/`. Each plugin has Chrome and Firefox listing drafts, permission justifications, privacy summaries, and screenshot requirements. This is required before any real store submission.
+
+---
+
+# Iteration 3 设计结论：第二批插件
+
+本节描述第二批 5 个插件的最终设计。实现后，本节即为当前事实。
+
+## 1. New Tab Dashboard
+
+- 使用 WXT `newtab` 入口生成 `chrome_url_overrides.newtab`。
+- 权限只使用 `storage`。
+- 不申请 `search` / `settings`，不修改默认搜索引擎。
+- 第一版不提供搜索框，避免把第三方搜索 URL 写死进插件。
+- 功能：时间、待办列表、快捷方式。
+- 所有数据保存在 `chrome.storage.local`。
+- 不联网、不展示广告、不收集数据。
+
+## 2. Privacy Cleaner
+
+- 权限使用 `activeTab`、`browsingData`、`storage`。
+- 不申请 `tabs`，因此第一版不做“关闭标签页自动清理”。
+- popup 用户点击后读取 active tab origin，并按 origin 清理：
+  - cookies；
+  - localStorage；
+  - IndexedDB；
+  - cache 可由用户选择。
+- options 页配置默认清理数据类型。
+- 清理动作必须由用户显式点击触发。
+- 不读取页面内容，不发起远程请求。
+
+## 3. Reading Progress
+
+- 权限使用 `activeTab`、`scripting`、`storage`。
+- content script 使用 runtime 注入。
+- 每个站点保存开关、颜色、高度、位置。
+- scroll 处理使用 `requestAnimationFrame` 节流。
+- 进度条高度默认 3px，支持 top / bottom。
+- 不发送网络请求。
+
+## 4. Clipboard History Lite
+
+- 权限使用 `activeTab`、`scripting`、`storage`、`clipboardWrite`。
+- 不申请 `clipboardRead`。
+- 用户在 popup 点击“Enable on this tab”后注入 content script。
+- content script 只监听显式 `copy` 事件。
+- 不监听 `input`、`keydown` 或隐藏字段。
+- 只保存 selection / copy event 中用户主动复制的文本。
+- 最多保留 50 条，全部存储在本地。
+- popup 支持搜索、单条复制、删除、清空。
+
+## 5. Screenshot Annotator
+
+- 权限使用 `activeTab`、`storage`、`clipboardWrite`。
+- popup 用户点击截图后调用 `tabs.captureVisibleTab`。
+- 截图 data URL 存入 `chrome.storage.session`，仅本浏览器会话可见。
+- 打开 `/annotate.html` 本地页面。
+- annotate 页支持矩形、箭头、文字标注。
+- 支持撤销、复制到剪贴板、下载 PNG。
+- 不上传截图。
+
+## 6. 合规边界
+
+- New Tab Dashboard 不修改搜索设置。
+- Privacy Cleaner 只执行用户显式触发的按 origin 清理。
+- Clipboard History 不读取剪贴板 API，也不读取输入框；只处理显式 copy 事件。
+- Screenshot Annotator 仅用户手势触发，数据不离开设备。
+- 所有插件保持 `data_collection_permissions.required = ["none"]`。

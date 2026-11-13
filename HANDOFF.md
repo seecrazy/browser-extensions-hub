@@ -2,7 +2,7 @@
 
 ## Current state
 
-Iteration 2 is implemented on `main`.
+Iteration 3 is implemented on `main`.
 
 - `@hub/shared` has contract-aware messaging and validated namespaced storage.
 - Every plugin has local `lib/` types, settings, and message contracts.
@@ -12,7 +12,8 @@ Iteration 2 is implemented on `main`.
 - Release workflow packages and downloads artifacts; Firefox signs from a staging directory.
 - CI runs build, typecheck, lint, format check, tests, Firefox lint, manifest validation, audit, and dependency review.
 - Icons are generated flat PNGs at required sizes.
-- Store listing, privacy, permission, and screenshot documents exist.
+- Ten plugins cover NTP, browsingData, content scripts, clipboard, and canvas page scenarios.
+- Store listing, privacy, permission, and screenshot documents exist for all shipped plugins.
 - Turbo dead config has been removed; builds use `pnpm -r`.
 
 The following commands pass locally:
@@ -29,13 +30,14 @@ pnpm audit --prod
 
 ## Next steps
 
-1. Load every build in Chrome and Firefox and complete manual QA.
+1. Load all ten builds in Chrome and Firefox and complete manual QA.
 2. Verify Quick Translate against the real Google endpoint.
-3. Review generated icons with design and replace if a richer visual identity is needed.
-4. Capture store screenshots and complete `docs/listings/<plugin>/screenshots.md`.
-5. Configure GitHub store secrets.
-6. Run a release for one plugin and inspect all artifacts.
-7. Confirm Chrome draft and signed Firefox behavior before public store submission.
+3. Verify Privacy Cleaner on a disposable HTTP origin and Screenshot Annotator copy/download flows.
+4. Review generated icons with design and replace if a richer visual identity is needed.
+5. Capture store screenshots and complete `docs/listings/<plugin>/screenshots.md`.
+6. Configure GitHub store secrets.
+7. Run a release for one plugin and inspect all artifacts.
+8. Confirm Chrome draft and signed Firefox behavior before public store submission.
 
 ## Notes
 

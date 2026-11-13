@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Tab Dashboard Lite</title>
+  </head>
+  <body>
+    <main class="dashboard">
+      <header class="dashboard-header">
+        <div>
+          <p id="date" class="dashboard-date"></p>
+          <h1 id="time" class="dashboard-time"></h1>
+        </div>
+        <p class="dashboard-privacy">Local only · No search override</p>
+      </header>
+
+      <section class="dashboard-grid">
+        <section class="dashboard-card">
+          <h2>Todos</h2>
+          <form id="todo-form">
+            <input
+              id="todo-text"
+              class="hub-input"
+              placeholder="Add a task"
+              maxlength="200"
+              required
+            />
+            <button type="submit" class="hub-button">Add</button>
+          </form>
+          <ul id="todos" class="dashboard-list"></ul>
+          <button id="clear-completed" class="hub-button hub-button-secondary">
+            Clear completed
+          </button>
+        </section>
+
+        <section class="dashboard-card">
+          <h2>Shortcuts</h2>
+          <form id="shortcut-form">
+            <input id="shortcut-label" class="hub-input" placeholder="Label" maxlength="50" />
+            <input id="shortcut-url" class="hub-input" placeholder="example.com" required />
+            <button type="submit" class="hub-button">Add</button>
+          </form>
+          <ul id="shortcuts" class="dashboard-grid-list"></ul>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

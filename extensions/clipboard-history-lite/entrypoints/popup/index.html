@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clipboard History Lite</title>
+  </head>
+  <body>
+    <main class="hub-page">
+      <h1 class="hub-title">Clipboard History Lite</h1>
+      <div class="hub-card">
+        <button id="activate" class="hub-button">Enable on this tab</button>
+        <p id="status" class="hub-status"></p>
+      </div>
+      <div class="hub-card">
+        <input id="search" class="hub-input" placeholder="Search copied text" />
+        <ul id="history" class="hub-list"></ul>
+        <button id="clear" class="hub-button hub-button-danger">Clear history</button>
+      </div>
+      <p class="hub-label">Only explicit copy events are saved. Nothing leaves your device.</p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reading Progress Lite</title>
+  </head>
+  <body>
+    <main class="hub-page">
+      <h1 class="hub-title">Reading Progress Lite</h1>
+      <div class="hub-card">
+        <p id="origin" class="hub-label">Current site</p>
+        <label class="hub-row"
+          ><input id="enabled" type="checkbox" /> <span>Show progress bar</span></label
+        >
+        <label class="hub-label" for="color">Color</label>
+        <input id="color" type="color" value="#60a5fa" />
+        <label class="hub-label" for="height">Height</label>
+        <input id="height" type="range" min="2" max="12" step="1" value="3" />
+        <label class="hub-label" for="position">Position</label>
+        <select id="position" class="hub-select">
+          <option value="top">Top</option>
+          <option value="bottom">Bottom</option>
+        </select>
+        <p id="status" class="hub-status"></p>
+      </div>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

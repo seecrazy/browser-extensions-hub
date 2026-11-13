@@ -19,6 +19,12 @@
 - [x] CI security, lint, audit, and dependency review.
 - [x] Repository process docs and store listing skeletons.
 - [x] Required-size extension icons.
+- [x] New Tab Dashboard.
+- [x] Privacy Cleaner.
+- [x] Reading Progress.
+- [x] Clipboard History Lite.
+- [x] Screenshot Annotator.
+- [x] Second-batch listings, icons, and tests.
 
 ## In progress
 
@@ -33,3 +39,12 @@
 - [ ] Playwright extension E2E.
 - [ ] Optional translation provider expansion.
 - [ ] Optional Tab Stash cloud-free sync via import/export conventions.
+
+## Iteration 3
+
+- [x] New Tab Dashboard
+- [x] Privacy Cleaner
+- [x] Reading Progress
+- [x] Clipboard History Lite
+- [x] Screenshot Annotator
+- [x] Second-batch listings and tests

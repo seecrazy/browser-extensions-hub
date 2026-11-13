@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Cleaner settings</title>
+  </head>
+  <body>
+    <main class="hub-page">
+      <h1 class="hub-title">Privacy Cleaner settings</h1>
+      <div class="hub-card">
+        <label class="hub-row"><input id="cookies" type="checkbox" /> <span>Cookies</span></label>
+        <label class="hub-row"
+          ><input id="local-storage" type="checkbox" /> <span>Local storage</span></label
+        >
+        <label class="hub-row"
+          ><input id="indexed-db" type="checkbox" /> <span>IndexedDB</span></label
+        >
+        <label class="hub-row"><input id="cache" type="checkbox" /> <span>Cache</span></label>
+        <p id="status" class="hub-status"></p>
+      </div>
+      <p class="hub-label">Cleanup is manual and applies only to the current site origin.</p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
