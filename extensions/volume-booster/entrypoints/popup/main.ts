@@ -1,16 +1,13 @@
-import { sendTabMessage } from "@hub/shared/messaging";
-import "@hub/shared/ui/styles.css";
+import { createTabMessageSender } from "@hub/shared/messaging";
 import { browser } from "wxt/browser";
-
-type VolumeState = {
-  level: number;
-  mediaCount: number;
-  unsupportedCount: number;
-};
+import "@hub/shared/ui/styles.css";
+import { volumeMessages } from "../../lib/messages";
+import type { VolumeMediaState } from "../../lib/types";
 
 const volumeInput = document.querySelector<HTMLInputElement>("#volume");
 const valueLabel = document.querySelector<HTMLParagraphElement>("#value");
 const status = document.querySelector<HTMLParagraphElement>("#status");
+const sendMessage = createTabMessageSender(volumeMessages);
 
 function setStatus(message: string, isError = false): void {
   if (!status) {
@@ -21,11 +18,32 @@ function setStatus(message: string, isError = false): void {
   status.classList.toggle("hub-status-error", isError);
 }
 
+function renderState(state: VolumeMediaState): void {
+  if (volumeInput && valueLabel) {
+    volumeInput.value = String(state.level);
+    valueLabel.textContent = `${state.level}%`;
+  }
+
+  if (state.mediaCount === 0) {
+    setStatus("No media element found in the main frame.");
+    return;
+  }
+
+  const audioText =
+    state.audioContextState === "suspended" ? " Interact with the page to resume audio." : "";
+  const unsupportedText =
+    state.unsupportedCount > 0
+      ? ` ${state.unsupportedCount} media element(s) cannot boost above 100% because they are cross-origin without CORS.`
+      : "";
+  setStatus(`Connected.${audioText}${unsupportedText}`);
+}
+
 async function getActiveTabId(): Promise<number | null> {
   const [tab] = await browser.tabs.query({
     active: true,
     currentWindow: true,
   });
+
   return tab?.id ?? null;
 }
 
@@ -41,14 +59,14 @@ async function injectContentScript(tabId: number): Promise<void> {
 async function loadVolume(): Promise<void> {
   const tabId = await getActiveTabId();
 
-  if (!tabId || !volumeInput || !valueLabel) {
+  if (!tabId || !volumeInput || !valueLabel || !status) {
     setStatus("No active tab available.", true);
     return;
   }
 
   try {
     await injectContentScript(tabId);
-    const response = await sendTabMessage<"VOLUME_GET", VolumeState>(tabId, {
+    const response = await sendMessage(tabId, {
       type: "VOLUME_GET",
     });
 
@@ -57,22 +75,7 @@ async function loadVolume(): Promise<void> {
       return;
     }
 
-    volumeInput.value = String(response.data.level);
-    valueLabel.textContent = `${response.data.level}%`;
-
-    if (response.data.mediaCount === 0) {
-      setStatus("No media element found in the main frame.");
-      return;
-    }
-
-    if (response.data.unsupportedCount > 0) {
-      setStatus(
-        `${response.data.unsupportedCount} media element(s) cannot boost above 100% because they are cross-origin without CORS.`,
-      );
-      return;
-    }
-
-    setStatus("Connected. Interact with the page if audio is muted.");
+    renderState(response.data);
   } catch (error) {
     setStatus(
       error instanceof Error ? error.message : "This tab cannot use Volume Booster Lite.",
@@ -90,7 +93,7 @@ async function setVolume(level: number): Promise<void> {
   }
 
   valueLabel.textContent = `${level}%`;
-  const response = await sendTabMessage<"VOLUME_SET", VolumeState>(tabId, {
+  const response = await sendMessage(tabId, {
     type: "VOLUME_SET",
     payload: {
       level,
@@ -102,19 +105,7 @@ async function setVolume(level: number): Promise<void> {
     return;
   }
 
-  if (response.data.mediaCount === 0) {
-    setStatus("No media element found in the main frame.");
-    return;
-  }
-
-  if (response.data.unsupportedCount > 0) {
-    setStatus(
-      `${response.data.unsupportedCount} media element(s) cannot boost above 100% because they are cross-origin without CORS.`,
-    );
-    return;
-  }
-
-  setStatus("Applied.");
+  renderState(response.data);
 }
 
 volumeInput?.addEventListener("input", () => {

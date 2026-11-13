@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a defect in one of the extensions
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: extension
+    attributes:
+      label: Extension
+      options:
+        - dark-mode-lite
+        - tab-stash
+        - volume-booster
+        - quick-translate
+        - focus-lock
+        - _template
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: "Chrome 142 / macOS 15"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true

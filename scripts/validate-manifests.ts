@@ -1,16 +1,7 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 const extensionsDir = path.resolve(process.cwd(), "extensions");
-const plugins = [
-  "_template",
-  "dark-mode-lite",
-  "tab-stash",
-  "volume-booster",
-  "quick-translate",
-  "focus-lock",
-] as const;
-
 const forbiddenPermissions = new Set([
   "webRequestBlocking",
   "debugger",
@@ -21,20 +12,39 @@ const forbiddenPermissions = new Set([
   "bookmarks",
   "downloads",
 ]);
+const broadHostPatterns = new Set([
+  "<all_urls>",
+  "*://*/*",
+  "http://*/*",
+  "https://*/*",
+  "file:///*",
+]);
+
+type BrowserTarget = "chrome" | "firefox";
 
 type Manifest = {
   manifest_version?: number;
   name?: string;
+  short_name?: string;
   version?: string;
+  description?: string;
   permissions?: string[];
   host_permissions?: string[];
   content_scripts?: Array<{
     matches?: string[];
+    js?: string[];
   }>;
   background?: {
     service_worker?: string;
     scripts?: string[];
   };
+  action?: {
+    default_popup?: string;
+  };
+  options_ui?: {
+    page?: string;
+  };
+  icons?: Record<string, string>;
   browser_specific_settings?: {
     gecko?: {
       id?: string;
@@ -42,25 +52,74 @@ type Manifest = {
   };
 };
 
-function readManifest(browserTarget: "chrome" | "firefox", plugin: string): Manifest {
-  const manifestPath = path.join(
-    extensionsDir,
+type PluginPackage = {
+  name?: string;
+  version?: string;
+};
+
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const pluginIndex = args.indexOf("--plugin");
+  const browserIndex = args.indexOf("--browser");
+  const plugin = pluginIndex >= 0 ? args[pluginIndex + 1] : undefined;
+  const browser =
+    browserIndex >= 0 ? (args[browserIndex + 1] as BrowserTarget | undefined) : undefined;
+
+  return {
     plugin,
-    ".output",
-    `${browserTarget}-mv3`,
-    "manifest.json",
-  );
-
-  if (!existsSync(manifestPath)) {
-    throw new Error(`Missing manifest: ${path.relative(process.cwd(), manifestPath)}`);
-  }
-
-  return JSON.parse(readFileSync(manifestPath, "utf8")) as Manifest;
+    browser,
+  };
 }
 
-function validateManifest(browserTarget: "chrome" | "firefox", plugin: string): void {
-  const manifest = readManifest(browserTarget, plugin);
+function readJson<T>(file: string): T {
+  return JSON.parse(readFileSync(file, "utf8")) as T;
+}
+
+function discoverPlugins(): string[] {
+  if (!existsSync(extensionsDir)) {
+    return [];
+  }
+
+  return readdirSync(extensionsDir, {
+    withFileTypes: true,
+  })
+    .filter(
+      (entry) =>
+        entry.isDirectory() && existsSync(path.join(extensionsDir, entry.name, "package.json")),
+    )
+    .map((entry) => entry.name);
+}
+
+function validateManifest(browserTarget: BrowserTarget, plugin: string): void {
+  const pluginDir = path.join(extensionsDir, plugin);
+  const packagePath = path.join(pluginDir, "package.json");
+  const manifestPath = path.join(pluginDir, ".output", `${browserTarget}-mv3`, "manifest.json");
+
+  if (!existsSync(packagePath)) {
+    throw new Error(`Missing package manifest: ${path.relative(process.cwd(), packagePath)}`);
+  }
+
+  if (!existsSync(manifestPath)) {
+    throw new Error(`Missing built manifest: ${path.relative(process.cwd(), manifestPath)}`);
+  }
+
+  const pluginPackage = readJson<PluginPackage>(packagePath);
+  const manifest = readJson<Manifest>(manifestPath);
+  const outputDir = path.dirname(manifestPath);
   const errors: string[] = [];
+  const expectedName = plugin === "_template" ? "@hub/template" : `@hub/${plugin}`;
+
+  if (pluginPackage.name !== expectedName) {
+    errors.push(
+      `package name must be "${expectedName}", got "${pluginPackage.name ?? "undefined"}"`,
+    );
+  }
+
+  if (pluginPackage.version && manifest.version && pluginPackage.version !== manifest.version) {
+    errors.push(
+      `package version "${pluginPackage.version}" does not match manifest version "${manifest.version}"`,
+    );
+  }
 
   if (manifest.manifest_version !== 3) {
     errors.push(`manifest_version must be 3, got ${manifest.manifest_version}`);
@@ -72,6 +131,10 @@ function validateManifest(browserTarget: "chrome" | "firefox", plugin: string): 
 
   if (!manifest.version) {
     errors.push("manifest.version is required");
+  }
+
+  if (!manifest.description) {
+    errors.push("manifest.description is required");
   }
 
   if (browserTarget === "chrome" && manifest.background && !manifest.background.service_worker) {
@@ -88,15 +151,49 @@ function validateManifest(browserTarget: "chrome" | "firefox", plugin: string): 
     }
   }
 
-  const hostPermissions = manifest.host_permissions ?? [];
-
-  if (hostPermissions.includes("<all_urls>")) {
-    errors.push('host_permissions must not contain "<all_urls>"');
+  for (const hostPermission of manifest.host_permissions ?? []) {
+    if (broadHostPatterns.has(hostPermission)) {
+      errors.push(`host_permissions must not contain broad pattern "${hostPermission}"`);
+    }
   }
 
   for (const contentScript of manifest.content_scripts ?? []) {
-    if (contentScript.matches?.includes("<all_urls>")) {
-      errors.push('Registered content_scripts.matches must not contain "<all_urls>"');
+    for (const match of contentScript.matches ?? []) {
+      if (broadHostPatterns.has(match)) {
+        errors.push(`Registered content_scripts.matches must not contain broad pattern "${match}"`);
+      }
+    }
+
+    for (const file of contentScript.js ?? []) {
+      const filePath = path.join(outputDir, file);
+
+      if (!existsSync(filePath)) {
+        errors.push(`content script file is missing: ${file}`);
+      }
+    }
+  }
+
+  for (const [size, iconPath] of Object.entries(manifest.icons ?? {})) {
+    const resolvedPath = path.join(outputDir, iconPath);
+
+    if (!existsSync(resolvedPath)) {
+      errors.push(`icon ${size} is missing: ${iconPath}`);
+    }
+  }
+
+  if (manifest.action?.default_popup) {
+    const popupPath = path.join(outputDir, manifest.action.default_popup);
+
+    if (!existsSync(popupPath)) {
+      errors.push(`popup file is missing: ${manifest.action.default_popup}`);
+    }
+  }
+
+  if (manifest.options_ui?.page) {
+    const optionsPath = path.join(outputDir, manifest.options_ui.page);
+
+    if (!existsSync(optionsPath)) {
+      errors.push(`options file is missing: ${manifest.options_ui.page}`);
     }
   }
 
@@ -107,20 +204,39 @@ function validateManifest(browserTarget: "chrome" | "firefox", plugin: string): 
   }
 }
 
-let failed = false;
+function main(): void {
+  const { plugin: requestedPlugin, browser: requestedBrowser } = parseArgs();
 
-for (const plugin of plugins) {
-  for (const browserTarget of ["chrome", "firefox"] as const) {
-    try {
-      validateManifest(browserTarget, plugin);
-      console.log(`✓ ${plugin} ${browserTarget} MV3`);
-    } catch (error) {
+  if (requestedBrowser && requestedBrowser !== "chrome" && requestedBrowser !== "firefox") {
+    throw new Error("--browser must be chrome or firefox");
+  }
+
+  const availablePlugins = discoverPlugins();
+  const plugins = requestedPlugin ? [requestedPlugin] : availablePlugins;
+  const browsers: BrowserTarget[] = requestedBrowser ? [requestedBrowser] : ["chrome", "firefox"];
+  let failed = false;
+
+  for (const plugin of plugins) {
+    if (!availablePlugins.includes(plugin)) {
       failed = true;
-      console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`✗ Unknown plugin: ${plugin}`);
+      continue;
     }
+
+    for (const browserTarget of browsers) {
+      try {
+        validateManifest(browserTarget, plugin);
+        console.log(`✓ ${plugin} ${browserTarget} MV3`);
+      } catch (error) {
+        failed = true;
+        console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+
+  if (failed) {
+    process.exit(1);
   }
 }
 
-if (failed) {
-  process.exit(1);
-}
+main();

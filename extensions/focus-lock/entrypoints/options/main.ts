@@ -1,13 +1,7 @@
-import { sendMessage } from "@hub/shared/messaging";
+import { createMessageSender } from "@hub/shared/messaging";
 import "@hub/shared/ui/styles.css";
-
-type FocusLockState = {
-  domains: string[];
-  hasPassword: boolean;
-  failedAttempts: number;
-  lockedUntil?: number;
-  unlockUntil?: number;
-};
+import { focusLockMessages } from "../../lib/messages";
+import type { FocusLockState } from "../../lib/types";
 
 const status = document.querySelector<HTMLParagraphElement>("#status");
 const passwordStatus = document.querySelector<HTMLParagraphElement>("#password-status");
@@ -15,6 +9,7 @@ const domainInput = document.querySelector<HTMLInputElement>("#domain");
 const domainsList = document.querySelector<HTMLUListElement>("#domains");
 const currentPasswordInput = document.querySelector<HTMLInputElement>("#current-password");
 const newPasswordInput = document.querySelector<HTMLInputElement>("#new-password");
+const sendMessage = createMessageSender(focusLockMessages);
 
 function setStatus(message: string, isError = false): void {
   if (!status) {
@@ -34,8 +29,51 @@ function setPasswordStatus(message: string, isError = false): void {
   passwordStatus.classList.toggle("hub-status-error", isError);
 }
 
+async function exportDomains(): Promise<void> {
+  const response = await sendMessage({
+    type: "FOCUS_LOCK_EXPORT_DOMAINS",
+  });
+
+  if (!response.ok) {
+    setStatus(response.error.message, true);
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(response.data.domains, null, 2)], {
+    type: "application/json",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "focus-lock-domains.json";
+  link.click();
+  URL.revokeObjectURL(link.href);
+  setStatus("Exported.");
+}
+
+async function importDomains(file: File): Promise<void> {
+  try {
+    const domains = JSON.parse(await file.text());
+    const response = await sendMessage({
+      type: "FOCUS_LOCK_IMPORT_DOMAINS",
+      payload: {
+        domains,
+      },
+    });
+
+    if (!response.ok) {
+      setStatus(response.error.message, true);
+      return;
+    }
+
+    setStatus(`Imported ${response.data.domains.length} domain(s).`);
+    await renderDomains();
+  } catch (error) {
+    setStatus(error instanceof Error ? error.message : "Unable to import file.", true);
+  }
+}
+
 async function renderDomains(): Promise<void> {
-  const response = await sendMessage<"FOCUS_LOCK_GET_STATE", FocusLockState>({
+  const response = await sendMessage({
     type: "FOCUS_LOCK_GET_STATE",
   });
 
@@ -44,46 +82,43 @@ async function renderDomains(): Promise<void> {
     return;
   }
 
+  const state = response.data as FocusLockState;
   domainsList.replaceChildren();
 
-  if (response.data.domains.length === 0) {
+  if (state.domains.length === 0) {
     domainsList.textContent = "No blocked domains yet.";
-    return;
-  }
+  } else {
+    for (const domain of state.domains) {
+      const item = document.createElement("li");
+      item.className = "hub-list-item";
+      const label = document.createElement("span");
+      label.textContent = domain;
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "hub-button hub-button-danger";
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", async () => {
+        const removeResponse = await sendMessage({
+          type: "FOCUS_LOCK_REMOVE_DOMAIN",
+          payload: {
+            domain,
+          },
+        });
 
-  for (const domain of response.data.domains) {
-    const item = document.createElement("li");
-    item.className = "hub-list-item";
-    const label = document.createElement("span");
-    label.textContent = domain;
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.className = "hub-button hub-button-danger";
-    removeButton.textContent = "Remove";
-    removeButton.addEventListener("click", async () => {
-      const removeResponse = await sendMessage<
-        "FOCUS_LOCK_REMOVE_DOMAIN",
-        Pick<FocusLockState, "domains">
-      >({
-        type: "FOCUS_LOCK_REMOVE_DOMAIN",
-        payload: {
-          domain,
-        },
+        if (!removeResponse.ok) {
+          setStatus(removeResponse.error.message, true);
+          return;
+        }
+
+        await renderDomains();
       });
-
-      if (!removeResponse.ok) {
-        setStatus(removeResponse.error.message, true);
-        return;
-      }
-
-      await renderDomains();
-    });
-    item.append(label, removeButton);
-    domainsList.append(item);
+      item.append(label, removeButton);
+      domainsList.append(item);
+    }
   }
 
   if (passwordStatus) {
-    passwordStatus.textContent = response.data.hasPassword
+    passwordStatus.textContent = state.hasPassword
       ? "A local password is set."
       : "No password is set.";
   }
@@ -98,7 +133,7 @@ document
       return;
     }
 
-    const response = await sendMessage<"FOCUS_LOCK_ADD_DOMAIN", Pick<FocusLockState, "domains">>({
+    const response = await sendMessage({
       type: "FOCUS_LOCK_ADD_DOMAIN",
       payload: {
         domain: domainInput.value,
@@ -124,10 +159,7 @@ document
       return;
     }
 
-    const response = await sendMessage<
-      "FOCUS_LOCK_SET_PASSWORD",
-      Pick<FocusLockState, "hasPassword">
-    >({
+    const response = await sendMessage({
       type: "FOCUS_LOCK_SET_PASSWORD",
       payload: {
         currentPassword: currentPasswordInput?.value ?? "",
@@ -141,11 +173,45 @@ document
     }
 
     newPasswordInput.value = "";
+
     if (currentPasswordInput) {
       currentPasswordInput.value = "";
     }
+
     setPasswordStatus("Password saved locally.");
     await renderDomains();
   });
+
+document
+  .querySelector<HTMLButtonElement>("#remove-password")
+  ?.addEventListener("click", async () => {
+    const currentPassword = currentPasswordInput?.value ?? "";
+    const response = await sendMessage({
+      type: "FOCUS_LOCK_REMOVE_PASSWORD",
+      payload: {
+        currentPassword,
+      },
+    });
+
+    if (!response.ok) {
+      setPasswordStatus(response.error.message, true);
+      return;
+    }
+
+    setPasswordStatus("Password removed.");
+    await renderDomains();
+  });
+
+document.querySelector<HTMLButtonElement>("#export-domains")?.addEventListener("click", () => {
+  void exportDomains();
+});
+
+document.querySelector<HTMLInputElement>("#import-domains")?.addEventListener("change", (event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
+
+  if (file) {
+    void importDomains(file);
+  }
+});
 
 void renderDomains();

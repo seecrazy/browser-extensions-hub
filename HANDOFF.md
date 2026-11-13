@@ -1,31 +1,45 @@
 # Handoff
 
-## 当前状态
+## Current state
 
-仓库已经完成 v0.1.0 的工程骨架和 5 个首批插件的第一版实现：
+Iteration 2 is implemented on `main`.
 
-- `@hub/shared`：messaging / storage / 基础 UI。
-- `_template`：可构建的新插件模板。
-- `dark-mode-lite`：activeTab 动态注入 CSS。
-- `tab-stash`：popup ↔ background 标签收纳。
-- `volume-booster`：activeTab 注入 + Web Audio gain。
-- `quick-translate`：activeTab 注入 + background 翻译请求。
-- `focus-lock`：DNR 拦截 + options + blocked page。
+- `@hub/shared` has contract-aware messaging and validated namespaced storage.
+- Every plugin has local `lib/` types, settings, and message contracts.
+- Dark Mode, Volume Booster, Tab Stash, Quick Translate, and Focus Lock have iteration-2 UX improvements.
+- Vitest covers shared and plugin pure logic.
+- Manifest validation supports all/single plugin and all/single browser.
+- Release workflow packages and downloads artifacts; Firefox signs from a staging directory.
+- CI runs build, typecheck, lint, format check, tests, Firefox lint, manifest validation, audit, and dependency review.
+- Icons are generated flat PNGs at required sizes.
+- Store listing, privacy, permission, and screenshot documents exist.
+- Turbo dead config has been removed; builds use `pnpm -r`.
 
-`pnpm build`、`pnpm typecheck`、`pnpm lint`、`pnpm test`、`pnpm validate:manifests` 已通过。
+The following commands pass locally:
 
-## 下一步
+```bash
+pnpm build
+pnpm typecheck
+pnpm lint
+pnpm format:check
+pnpm test
+pnpm validate:manifests
+pnpm audit --prod
+```
 
-1. 用 Chrome / Firefox 分别加载产物做手工验收。
-2. 验证 Quick Translate 的 Google endpoint 在真实网络环境可用。
-3. 补齐真实插件图标、商店截图和 listing 文案。
-4. 为 `@hub/shared` 增加单元测试。
-5. 在 GitHub 配置 Chrome / Firefox 发布 secrets。
-6. 首次发布建议只打 tag 生成 GitHub Release，再人工确认商店提交。
+## Next steps
 
-## 注意事项
+1. Load every build in Chrome and Firefox and complete manual QA.
+2. Verify Quick Translate against the real Google endpoint.
+3. Review generated icons with design and replace if a richer visual identity is needed.
+4. Capture store screenshots and complete `docs/listings/<plugin>/screenshots.md`.
+5. Configure GitHub store secrets.
+6. Run a release for one plugin and inspect all artifacts.
+7. Confirm Chrome draft and signed Firefox behavior before public store submission.
 
-- Firefox 构建已强制 `manifestVersion: 3`。
-- runtime 注入型 content script 使用 `matches: []`，避免 WXT 自动生成 `<all_urls>` host permission。
-- 所有插件图标当前是占位 PNG，上架前必须替换。
-- `scripts/validate-manifests.ts` 需要手动加入新插件目录名。
+## Notes
+
+- Firefox minimum version is 142 because data-collection permissions require it.
+- Runtime-injected content scripts use `matches: []` to avoid broad host permissions.
+- Release publish jobs must download artifacts; do not rely on build job files.
+- Manifest validation discovers extension directories; no hardcoded plugin list is required.

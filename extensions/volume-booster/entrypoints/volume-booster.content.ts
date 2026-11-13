@@ -1,22 +1,18 @@
-import { defineMessageHandler } from "@hub/shared/messaging";
+import { onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { browser } from "wxt/browser";
+import { volumeMessages } from "../lib/messages";
+import { getSiteLevel, patchSiteLevel } from "../lib/settings";
+import { validateVolumeSettings, volumeDefaults } from "../lib/types";
+import type { VolumeMediaState } from "../lib/types";
 
-type VolumeSettings = {
-  schemaVersion: number;
-  level: number;
-};
-
-type VolumeState = {
-  level: number;
-  mediaCount: number;
-  unsupportedCount: number;
-};
-
-const settingsStorage = createNamespacedStorage<VolumeSettings>("volume-booster.settings", {
-  schemaVersion: 1,
-  level: 100,
-});
+const settingsStorage = createNamespacedStorage(
+  "volume-booster.settings",
+  volumeDefaults,
+  "local",
+  {
+    validate: validateVolumeSettings,
+  },
+);
 
 let audioContext: AudioContext | null = null;
 const mediaNodes = new WeakMap<HTMLMediaElement, GainNode>();
@@ -61,7 +57,7 @@ async function resumeAudioContext(): Promise<void> {
   }
 }
 
-async function applyVolume(level: number): Promise<VolumeState> {
+async function applyVolume(level: number): Promise<VolumeMediaState> {
   const normalizedLevel = Math.min(300, Math.max(0, Math.round(level)));
   const mediaElements = Array.from(document.querySelectorAll<HTMLMediaElement>("video, audio"));
   let unsupportedCount = 0;
@@ -69,8 +65,7 @@ async function applyVolume(level: number): Promise<VolumeState> {
   for (const element of mediaElements) {
     if (isCorsEligible(element)) {
       await resumeAudioContext();
-      const gainNode = getGainNode(element);
-      gainNode.gain.value = normalizedLevel / 100;
+      getGainNode(element).gain.value = normalizedLevel / 100;
     } else {
       element.volume = Math.min(1, normalizedLevel / 100);
 
@@ -84,6 +79,7 @@ async function applyVolume(level: number): Promise<VolumeState> {
     level: normalizedLevel,
     mediaCount: mediaElements.length,
     unsupportedCount,
+    audioContextState: audioContext?.state ?? "none",
   };
 }
 
@@ -96,8 +92,26 @@ async function initialize(): Promise<void> {
   }
 
   windowWithMarker[installedMarker] = true;
-  const settings = await settingsStorage.get();
-  await applyVolume(settings.level);
+  const origin = document.location.origin;
+  let currentLevel = getSiteLevel(await settingsStorage.get(), origin);
+  let currentState = await applyVolume(currentLevel);
+
+  settingsStorage.subscribe((nextSettings) => {
+    currentLevel = getSiteLevel(nextSettings, origin);
+    void applyVolume(currentLevel).then((state) => {
+      currentState = state;
+    });
+  });
+
+  const observer = new MutationObserver(() => {
+    void applyVolume(currentLevel).then((state) => {
+      currentState = state;
+    });
+  });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
 
   document.addEventListener(
     "pointerdown",
@@ -109,28 +123,16 @@ async function initialize(): Promise<void> {
     },
   );
 
-  browser.runtime.onMessage.addListener(
-    defineMessageHandler({
-      VOLUME_GET: async () => {
-        const currentSettings = await settingsStorage.get();
-        const mediaElements = Array.from(
-          document.querySelectorAll<HTMLMediaElement>("video, audio"),
-        );
-        return {
-          level: currentSettings.level,
-          mediaCount: mediaElements.length,
-          unsupportedCount: mediaElements.filter((element) => !isCorsEligible(element)).length,
-        } satisfies VolumeState;
-      },
-      VOLUME_SET: async (payload: { level: number }) => {
-        const state = await applyVolume(payload.level);
-        await settingsStorage.patch({
-          level: state.level,
-        });
-        return state;
-      },
-    }),
-  );
+  onContractMessage(volumeMessages, {
+    VOLUME_GET: () => currentState,
+    VOLUME_SET: async (payload) => {
+      currentLevel = payload.level;
+      currentState = await applyVolume(payload.level);
+      const nextSettings = patchSiteLevel(await settingsStorage.get(), origin, payload.level);
+      await settingsStorage.patch(nextSettings);
+      return currentState;
+    },
+  });
 }
 
 export default defineContentScript({

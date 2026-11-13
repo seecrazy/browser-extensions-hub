@@ -1,28 +1,29 @@
+import { onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { defineMessageHandler } from "@hub/shared/messaging";
-import { browser } from "wxt/browser";
+import { darkModeMessages } from "../lib/messages";
+import { getSiteState, patchSiteState } from "../lib/settings";
+import { darkModeDefaults, validateDarkModeSettings } from "../lib/types";
 
-type DarkModeSettings = {
-  schemaVersion: number;
-  enabled: boolean;
-  strength: number;
-};
-
-const settingsStorage = createNamespacedStorage<DarkModeSettings>("dark-mode-lite.settings", {
-  schemaVersion: 1,
-  enabled: false,
-  strength: 70,
-});
+const settingsStorage = createNamespacedStorage(
+  "dark-mode-lite.settings",
+  darkModeDefaults,
+  "local",
+  {
+    validate: validateDarkModeSettings,
+  },
+);
 
 const styleId = "__hub_dark_mode_lite_style__";
 
-function applyDarkMode(settings: DarkModeSettings): void {
-  let style = document.getElementById(styleId) as HTMLStyleElement | null;
+function applyDarkMode(enabled: boolean, strength: number): void {
+  const existingStyle = document.getElementById(styleId);
 
-  if (!settings.enabled) {
-    style?.remove();
+  if (!enabled) {
+    existingStyle?.remove();
     return;
   }
+
+  let style = document.getElementById(styleId) as HTMLStyleElement | null;
 
   if (!style) {
     style = document.createElement("style");
@@ -30,8 +31,7 @@ function applyDarkMode(settings: DarkModeSettings): void {
     document.head.append(style);
   }
 
-  const strength = Math.min(100, Math.max(0, settings.strength));
-  const strengthRatio = strength / 100;
+  const strengthRatio = Math.min(100, Math.max(0, strength)) / 100;
   const brightness = 1 + 0.06 * strengthRatio;
   const contrast = 1 + 0.08 * strengthRatio;
   const mediaFilter = "invert(1) hue-rotate(180deg)";
@@ -59,32 +59,31 @@ function applyDarkMode(settings: DarkModeSettings): void {
 
 async function initialize(): Promise<void> {
   const installedMarker = "__hubDarkModeLiteInstalled";
-  const windowWithMarker = window as typeof window & {
-    [installedMarker]?: boolean;
-  };
+  const windowWithMarker = window as typeof window & Record<string, boolean | undefined>;
 
   if (windowWithMarker[installedMarker]) {
     return;
   }
 
   windowWithMarker[installedMarker] = true;
-  const settings = await settingsStorage.get();
-  applyDarkMode(settings);
+  const origin = document.location.origin;
+  let siteState = getSiteState(await settingsStorage.get(), origin);
+  applyDarkMode(siteState.settings.enabled, siteState.settings.strength);
 
   settingsStorage.subscribe((nextSettings) => {
-    applyDarkMode(nextSettings);
+    siteState = getSiteState(nextSettings, origin);
+    applyDarkMode(siteState.settings.enabled, siteState.settings.strength);
   });
 
-  browser.runtime.onMessage.addListener(
-    defineMessageHandler({
-      DARK_MODE_GET_STATE: () => settingsStorage.get(),
-      DARK_MODE_SET_STATE: async (payload) => {
-        const nextSettings = await settingsStorage.patch(payload);
-        applyDarkMode(nextSettings);
-        return nextSettings;
-      },
-    }),
-  );
+  onContractMessage(darkModeMessages, {
+    DARK_MODE_GET_SITE_STATE: () => siteState,
+    DARK_MODE_SET_SITE_STATE: async (payload) => {
+      const nextSettings = patchSiteState(await settingsStorage.get(), origin, payload);
+      await settingsStorage.patch(nextSettings);
+      siteState = getSiteState(nextSettings, origin);
+      return siteState;
+    },
+  });
 }
 
 export default defineContentScript({

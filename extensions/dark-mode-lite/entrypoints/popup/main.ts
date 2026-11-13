@@ -1,16 +1,14 @@
-import { sendTabMessage } from "@hub/shared/messaging";
-import "@hub/shared/ui/styles.css";
+import { createTabMessageSender } from "@hub/shared/messaging";
 import { browser } from "wxt/browser";
-
-type DarkModeSettings = {
-  schemaVersion: number;
-  enabled: boolean;
-  strength: number;
-};
+import "@hub/shared/ui/styles.css";
+import { darkModeMessages } from "../../lib/messages";
+import type { DarkModeSiteState } from "../../lib/types";
 
 const enabledInput = document.querySelector<HTMLInputElement>("#enabled");
 const strengthInput = document.querySelector<HTMLInputElement>("#strength");
+const siteLabel = document.querySelector<HTMLParagraphElement>("#site");
 const status = document.querySelector<HTMLParagraphElement>("#status");
+const sendMessage = createTabMessageSender(darkModeMessages);
 
 function setStatus(message: string, isError = false): void {
   if (!status) {
@@ -26,6 +24,7 @@ async function getActiveTabId(): Promise<number | null> {
     active: true,
     currentWindow: true,
   });
+
   return tab?.id ?? null;
 }
 
@@ -38,18 +37,28 @@ async function injectContentScript(tabId: number): Promise<void> {
   });
 }
 
+function renderState(state: DarkModeSiteState): void {
+  if (!enabledInput || !strengthInput || !siteLabel) {
+    return;
+  }
+
+  siteLabel.textContent = state.origin || "Current site";
+  enabledInput.checked = state.settings.enabled;
+  strengthInput.value = String(state.settings.strength);
+}
+
 async function loadSettings(): Promise<void> {
   const tabId = await getActiveTabId();
 
-  if (!tabId || !enabledInput || !strengthInput) {
+  if (!tabId || !enabledInput || !strengthInput || !status) {
     setStatus("No active tab available.", true);
     return;
   }
 
   try {
     await injectContentScript(tabId);
-    const response = await sendTabMessage<"DARK_MODE_GET_STATE", DarkModeSettings>(tabId, {
-      type: "DARK_MODE_GET_STATE",
+    const response = await sendMessage(tabId, {
+      type: "DARK_MODE_GET_SITE_STATE",
     });
 
     if (!response.ok) {
@@ -57,17 +66,14 @@ async function loadSettings(): Promise<void> {
       return;
     }
 
-    enabledInput.checked = response.data.enabled;
-    strengthInput.value = String(response.data.strength);
+    renderState(response.data);
     setStatus("Connected to current tab.");
   } catch (error) {
     setStatus(error instanceof Error ? error.message : "This tab cannot use Dark Mode Lite.", true);
   }
 }
 
-async function saveSettings(
-  patch: Partial<Omit<DarkModeSettings, "schemaVersion">>,
-): Promise<void> {
+async function saveSettings(patch: { enabled?: boolean; strength?: number }): Promise<void> {
   const tabId = await getActiveTabId();
 
   if (!tabId) {
@@ -75,14 +81,17 @@ async function saveSettings(
     return;
   }
 
-  const response = await sendTabMessage<"DARK_MODE_SET_STATE", DarkModeSettings>(tabId, {
-    type: "DARK_MODE_SET_STATE",
+  const response = await sendMessage(tabId, {
+    type: "DARK_MODE_SET_SITE_STATE",
     payload: patch,
   });
 
   if (!response.ok) {
     setStatus(response.error.message, true);
+    return;
   }
+
+  renderState(response.data);
 }
 
 enabledInput?.addEventListener("change", () => {

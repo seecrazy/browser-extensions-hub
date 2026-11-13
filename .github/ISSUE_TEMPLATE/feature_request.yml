@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest a scoped improvement
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: extension
+    attributes:
+      label: Extension
+      options:
+        - dark-mode-lite
+        - tab-stash
+        - volume-booster
+        - quick-translate
+        - focus-lock
+        - shared architecture
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals

@@ -15,6 +15,12 @@
         </label>
         <p id="status" class="hub-status"></p>
       </div>
+      <div class="hub-card">
+        <h2>Data</h2>
+        <button id="export" class="hub-button">Export stash JSON</button>
+        <label class="hub-button hub-button-secondary" for="import">Import stash JSON</label>
+        <input id="import" type="file" accept="application/json" hidden />
+      </div>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

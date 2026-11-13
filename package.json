@@ -20,16 +20,26 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "pnpm -r run typecheck",
-    "test": "pnpm -r run test",
+    "test": "vitest run",
     "validate:manifests": "node --experimental-strip-types scripts/validate-manifests.ts",
-    "validate:release-tag": "node --experimental-strip-types scripts/validate-release-tag.ts"
+    "validate:release-tag": "node --experimental-strip-types scripts/validate-release-tag.ts",
+    "format:check": "prettier --check .",
+    "audit": "pnpm audit --prod"
   },
   "devDependencies": {
     "@hub/eslint-config": "workspace:*",
     "@types/chrome": "0.0.280",
-    "eslint": "9.14.0",
+    "eslint": "9.39.5",
     "pnpm": "9.15.9",
     "prettier": "3.3.3",
-    "typescript": "5.6.3"
+    "typescript": "5.6.3",
+    "chrome-webstore-upload-cli": "4.0.2",
+    "web-ext": "10.8.0",
+    "vitest": "5.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@typescript-eslint/typescript-estree>minimatch": "^11.0.1"
+    }
   }
 }

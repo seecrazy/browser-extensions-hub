@@ -1,16 +1,10 @@
 import { createNamespacedStorage } from "@hub/shared/storage";
-import "@hub/shared/ui/styles.css";
 import { browser } from "wxt/browser";
+import "@hub/shared/ui/styles.css";
+import { translateDefaults } from "../../lib/types";
 
-type TranslateSettings = {
-  schemaVersion: number;
-  targetLanguage: string;
-};
-
-const settingsStorage = createNamespacedStorage<TranslateSettings>("quick-translate.settings", {
-  schemaVersion: 1,
-  targetLanguage: "en",
-});
+type TranslateSettings = typeof translateDefaults;
+const settingsStorage = createNamespacedStorage("quick-translate.settings", translateDefaults);
 const languageSelect = document.querySelector<HTMLSelectElement>("#language");
 const status = document.querySelector<HTMLParagraphElement>("#status");
 
@@ -24,7 +18,7 @@ function setStatus(message: string, isError = false): void {
 }
 
 async function loadSettings(): Promise<void> {
-  const settings = await settingsStorage.get();
+  const settings = (await settingsStorage.get()) as TranslateSettings;
 
   if (languageSelect) {
     languageSelect.value = settings.targetLanguage;

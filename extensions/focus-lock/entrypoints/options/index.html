@@ -15,6 +15,11 @@
           <button type="submit" class="hub-button">Add domain</button>
         </form>
         <ul id="domains" class="hub-list"></ul>
+        <div class="hub-row">
+          <button id="export-domains" class="hub-button hub-button-secondary">Export</button>
+          <label class="hub-button hub-button-secondary" for="import-domains">Import</label>
+          <input id="import-domains" type="file" accept="application/json" hidden />
+        </div>
       </section>
       <section class="hub-card">
         <h2>Password</h2>
@@ -34,6 +39,7 @@
           />
           <button type="submit" class="hub-button">Save password</button>
         </form>
+        <button id="remove-password" class="hub-button hub-button-danger">Remove password</button>
         <p id="password-status" class="hub-status"></p>
       </section>
       <p id="status" class="hub-status"></p>

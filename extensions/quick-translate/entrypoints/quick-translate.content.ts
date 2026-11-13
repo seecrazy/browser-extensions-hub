@@ -1,19 +1,24 @@
+import { createMessageSender } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { defineMessageHandler, sendMessage } from "@hub/shared/messaging";
-import { browser } from "wxt/browser";
+import { quickTranslateMessages } from "../lib/messages";
+import { translateDefaults, validateTranslateSettings } from "../lib/types";
+import { isRtlLanguage } from "../lib/types";
 
-type TranslateSettings = {
-  schemaVersion: number;
-  targetLanguage: string;
-};
-
-const settingsStorage = createNamespacedStorage<TranslateSettings>("quick-translate.settings", {
-  schemaVersion: 1,
-  targetLanguage: "en",
-});
+const settingsStorage = createNamespacedStorage(
+  "quick-translate.settings",
+  translateDefaults,
+  "local",
+  {
+    validate: validateTranslateSettings,
+  },
+);
+const sendMessage = createMessageSender(quickTranslateMessages);
+const cache = new Map<string, string>();
 
 const hostId = "__hub-quick-translate-host__";
 let shadowRoot: ShadowRoot | null = null;
+let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+let currentSelectionText = "";
 
 function getShadowRoot(): ShadowRoot {
   let host = document.getElementById(hostId) as HTMLDivElement | null;
@@ -67,8 +72,13 @@ function getShadowRoot(): ShadowRoot {
         letter-spacing: 0.08em;
       }
 
-      .bubble-close {
-        padding: 2px 6px;
+      .bubble-actions {
+        display: flex;
+        gap: 4px;
+      }
+
+      .bubble-button {
+        padding: 2px 7px;
         color: #f9fafb;
         background: transparent;
         border: 0;
@@ -76,7 +86,7 @@ function getShadowRoot(): ShadowRoot {
         cursor: pointer;
       }
 
-      .bubble-close:hover {
+      .bubble-button:hover {
         background: #374151;
       }
 
@@ -97,15 +107,21 @@ function getShadowRoot(): ShadowRoot {
 }
 
 function hideBubble(): void {
-  const root = shadowRoot;
-  const bubble = root?.querySelector(".bubble");
+  const bubble = shadowRoot?.querySelector(".bubble");
   bubble?.remove();
 }
 
-function showBubble(text: string, isError = false): void {
+function copyTranslation(): void {
+  const text = shadowRoot?.querySelector<HTMLElement>(".bubble-text")?.textContent ?? "";
+
+  if (text && navigator.clipboard) {
+    void navigator.clipboard.writeText(text);
+  }
+}
+
+function showBubble(text: string, options: { isError?: boolean; dir?: "ltr" | "rtl" } = {}): void {
   const root = getShadowRoot();
-  const existing = root.querySelector(".bubble");
-  existing?.remove();
+  root.querySelector(".bubble")?.remove();
   const bubble = document.createElement("div");
   bubble.className = "bubble";
   const header = document.createElement("div");
@@ -113,16 +129,26 @@ function showBubble(text: string, isError = false): void {
   const title = document.createElement("span");
   title.className = "bubble-title";
   title.textContent = "Quick Translate";
-  const close = document.createElement("button");
-  close.type = "button";
-  close.className = "bubble-close";
-  close.textContent = "×";
-  close.setAttribute("aria-label", "Close translation");
-  close.addEventListener("click", hideBubble);
-  header.append(title, close);
+  const actions = document.createElement("div");
+  actions.className = "bubble-actions";
+  const copyButton = document.createElement("button");
+  copyButton.type = "button";
+  copyButton.className = "bubble-button";
+  copyButton.textContent = "Copy";
+  copyButton.setAttribute("aria-label", "Copy translation");
+  copyButton.addEventListener("click", copyTranslation);
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.className = "bubble-button";
+  closeButton.textContent = "×";
+  closeButton.setAttribute("aria-label", "Close translation");
+  closeButton.addEventListener("click", hideBubble);
+  actions.append(copyButton, closeButton);
+  header.append(title, actions);
   const content = document.createElement("p");
-  content.className = isError ? "bubble-text bubble-error" : "bubble-text";
+  content.className = options.isError ? "bubble-text bubble-error" : "bubble-text";
   content.textContent = text;
+  content.dir = options.dir ?? "auto";
   bubble.append(header, content);
   root.append(bubble);
 }
@@ -134,8 +160,16 @@ function positionBubble(rect: DOMRect): void {
     return;
   }
 
-  const left = Math.max(8, Math.min(window.innerWidth - bubble.offsetWidth - 8, rect.left));
-  const top = Math.max(8, rect.bottom + 8);
+  const margin = 8;
+  let left = rect.left;
+  let top = rect.bottom + margin;
+
+  left = Math.max(margin, Math.min(window.innerWidth - bubble.offsetWidth - margin, left));
+
+  if (top + bubble.offsetHeight > window.innerHeight - margin) {
+    top = Math.max(margin, rect.top - bubble.offsetHeight - margin);
+  }
+
   bubble.style.left = `${left}px`;
   bubble.style.top = `${top}px`;
 }
@@ -147,44 +181,95 @@ function isEditableSelection(node: Node | null): boolean {
   );
 }
 
+function selectionIsInsideBubble(node: Node | null): boolean {
+  return Boolean(node?.parentElement?.closest(`#${hostId}`));
+}
+
 async function translateSelection(selection: Selection): Promise<void> {
+  if (selection.rangeCount === 0) {
+    return;
+  }
+
   const range = selection.getRangeAt(0);
   const rect = range.getBoundingClientRect();
   const rawText = selection.toString().trim();
 
-  if (!rawText || isEditableSelection(selection.anchorNode)) {
+  if (
+    !rawText ||
+    isEditableSelection(selection.anchorNode) ||
+    isEditableSelection(selection.focusNode)
+  ) {
     return;
   }
 
   const settings = await settingsStorage.get();
   const text = rawText.length > 1000 ? `${rawText.slice(0, 1000)}...` : rawText;
-  showBubble(
-    settings.targetLanguage === "auto"
-      ? "Translating..."
-      : `Translating to ${settings.targetLanguage}...`,
-  );
-  positionBubble(rect);
-  const response = await sendMessage<
-    "QUICK_TRANSLATE_TRANSLATE",
-    {
-      text: string;
-    }
-  >({
-    type: "QUICK_TRANSLATE_TRANSLATE",
-    payload: {
-      text,
-      targetLanguage: settings.targetLanguage,
-    },
-  });
+  const cacheKey = `${settings.targetLanguage}:${text}`;
+  const cached = cache.get(cacheKey);
 
-  if (!response.ok) {
-    showBubble(response.error.message, true);
+  if (cached) {
+    showBubble(cached);
     positionBubble(rect);
     return;
   }
 
-  showBubble(response.data.text);
+  showBubble(`Translating to ${settings.targetLanguage}...`);
   positionBubble(rect);
+  const response = await sendMessage(
+    {
+      type: "QUICK_TRANSLATE_TRANSLATE",
+      payload: {
+        text,
+        targetLanguage: settings.targetLanguage,
+      },
+    },
+    {
+      timeoutMs: settings.timeoutMs,
+    },
+  );
+
+  if (!response.ok) {
+    showBubble(response.error.message, {
+      isError: true,
+    });
+    positionBubble(rect);
+    return;
+  }
+
+  cache.set(cacheKey, response.data.text);
+  showBubble(response.data.text, {
+    dir: isRtlLanguage(response.data.sourceLanguage ?? settings.targetLanguage) ? "rtl" : "ltr",
+  });
+  positionBubble(rect);
+}
+
+function handleSelectionChange(): void {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+
+  debounceTimer = setTimeout(() => {
+    const selection = document.getSelection();
+
+    if (
+      !selection ||
+      selection.isCollapsed ||
+      selection.rangeCount === 0 ||
+      selectionIsInsideBubble(selection.anchorNode)
+    ) {
+      hideBubble();
+      return;
+    }
+
+    const text = selection.toString().trim();
+
+    if (!text || text === currentSelectionText) {
+      return;
+    }
+
+    currentSelectionText = text;
+    void translateSelection(selection);
+  }, 220);
 }
 
 async function initialize(): Promise<void> {
@@ -196,34 +281,12 @@ async function initialize(): Promise<void> {
   }
 
   windowWithMarker[installedMarker] = true;
-  document.addEventListener(
-    "mouseup",
-    () => {
-      const selection = document.getSelection();
-
-      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
-        hideBubble();
-        return;
-      }
-
-      void translateSelection(selection);
-    },
-    true,
-  );
+  document.addEventListener("selectionchange", handleSelectionChange, true);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       hideBubble();
     }
   });
-  browser.runtime.onMessage.addListener(
-    defineMessageHandler({
-      QUICK_TRANSLATE_PING: () => {
-        return {
-          active: true,
-        };
-      },
-    }),
-  );
 }
 
 export default defineContentScript({

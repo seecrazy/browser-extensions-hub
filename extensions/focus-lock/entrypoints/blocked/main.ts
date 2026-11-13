@@ -1,17 +1,17 @@
-import { sendMessage } from "@hub/shared/messaging";
+import { createMessageSender } from "@hub/shared/messaging";
 import "@hub/shared/ui/styles.css";
+import { focusLockMessages } from "../../lib/messages";
+import type { FocusLockState } from "../../lib/types";
 
-type FocusLockState = {
-  hasPassword: boolean;
-  unlockUntil?: number;
-};
-
+const domainLabel = document.querySelector<HTMLParagraphElement>("#domain");
 const passwordArea = document.querySelector<HTMLDivElement>("#password-area");
 const cooldownArea = document.querySelector<HTMLDivElement>("#cooldown-area");
 const passwordInput = document.querySelector<HTMLInputElement>("#password");
 const unlockButton = document.querySelector<HTMLButtonElement>("#unlock");
 const cooldownButton = document.querySelector<HTMLButtonElement>("#cooldown");
 const status = document.querySelector<HTMLParagraphElement>("#status");
+const sendMessage = createMessageSender(focusLockMessages);
+const blockedDomain = new URLSearchParams(document.location.search).get("domain") ?? "";
 
 function setStatus(message: string, isError = false): void {
   if (!status) {
@@ -23,7 +23,7 @@ function setStatus(message: string, isError = false): void {
 }
 
 async function loadState(): Promise<void> {
-  const response = await sendMessage<"FOCUS_LOCK_GET_STATE", FocusLockState>({
+  const response = await sendMessage({
     type: "FOCUS_LOCK_GET_STATE",
   });
 
@@ -32,14 +32,20 @@ async function loadState(): Promise<void> {
     return;
   }
 
-  if (response.data.unlockUntil && response.data.unlockUntil > Date.now()) {
+  const state = response.data as FocusLockState;
+
+  if (domainLabel) {
+    domainLabel.textContent = blockedDomain || "This site";
+  }
+
+  if (blockedDomain && state.unlockedDomains.includes(blockedDomain)) {
     if (passwordArea) passwordArea.hidden = true;
     if (cooldownArea) cooldownArea.hidden = true;
-    setStatus("Unlocked temporarily. Reloading the blocked site should work now.");
+    setStatus("Unlocked temporarily. Reloading this site should work now.");
     return;
   }
 
-  if (response.data.hasPassword) {
+  if (state.hasPassword) {
     if (cooldownArea) cooldownArea.hidden = true;
     return;
   }
@@ -52,14 +58,10 @@ unlockButton?.addEventListener("click", async () => {
     return;
   }
 
-  const response = await sendMessage<
-    "FOCUS_LOCK_UNLOCK",
-    {
-      unlockUntil: number;
-    }
-  >({
+  const response = await sendMessage({
     type: "FOCUS_LOCK_UNLOCK",
     payload: {
+      ...(blockedDomain ? { domain: blockedDomain } : {}),
       password: passwordInput.value,
     },
   });
@@ -73,13 +75,11 @@ unlockButton?.addEventListener("click", async () => {
 });
 
 cooldownButton?.addEventListener("click", async () => {
-  const response = await sendMessage<
-    "FOCUS_LOCK_START_COOLDOWN",
-    {
-      unlockUntil: number;
-    }
-  >({
+  const response = await sendMessage({
     type: "FOCUS_LOCK_START_COOLDOWN",
+    payload: {
+      ...(blockedDomain ? { domain: blockedDomain } : {}),
+    },
   });
 
   if (!response.ok) {

@@ -5,6 +5,13 @@ on:
     tags:
       - "*@*"
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -12,13 +19,13 @@ jobs:
       plugin: ${{ steps.tag.outputs.plugin }}
       version: ${{ steps.tag.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v4
         with:
           node-version-file: .nvmrc
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v4
         with:
           version: 9.15.9
 
@@ -39,14 +46,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: validate
+    env:
+      PLUGIN: ${{ needs.validate.outputs.plugin }}
+      VERSION: ${{ needs.validate.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v4
         with:
           node-version-file: .nvmrc
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v4
         with:
           version: 9.15.9
 
@@ -54,28 +64,50 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Chrome
-        run: pnpm --filter "@hub/${{ needs.validate.outputs.plugin }}" build:chrome
+        run: pnpm --filter "@hub/${PLUGIN}" build:chrome
 
       - name: Build Firefox
-        run: pnpm --filter "@hub/${{ needs.validate.outputs.plugin }}" build:firefox
+        run: pnpm --filter "@hub/${PLUGIN}" build:firefox
+
+      - name: Validate built manifests
+        run: |
+          node --experimental-strip-types scripts/validate-manifests.ts --plugin "$PLUGIN" --browser chrome
+          node --experimental-strip-types scripts/validate-manifests.ts --plugin "$PLUGIN" --browser firefox
+
+      - name: Lint Firefox build
+        run: pnpm exec web-ext lint --source-dir "extensions/${PLUGIN}/.output/firefox-mv3"
 
       - name: Pack Chrome artifact
         run: |
-          plugin="${{ needs.validate.outputs.plugin }}"
-          version="${{ needs.validate.outputs.version }}"
           mkdir -p release
-          (cd "extensions/${plugin}/.output/chrome-mv3" && zip -r "../../../release/${plugin}-${version}-chrome-mv3.zip" .)
+          (cd "extensions/${PLUGIN}/.output/chrome-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-chrome-mv3.zip" .)
 
       - name: Pack Firefox artifact
         run: |
-          plugin="${{ needs.validate.outputs.plugin }}"
-          version="${{ needs.validate.outputs.version }}"
-          mkdir -p release
-          (cd "extensions/${plugin}/.output/firefox-mv3" && zip -r "../../../release/${plugin}-${version}-firefox-mv3.xpi" .)
+          (cd "extensions/${PLUGIN}/.output/firefox-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-firefox-mv3.zip" .)
 
-      - uses: actions/upload-artifact@v4
+      - name: Pack Firefox source artifact
+        run: |
+          git archive --format=zip \
+            --output "release/${PLUGIN}-${VERSION}-firefox-source.zip" \
+            HEAD \
+            "extensions/${PLUGIN}" \
+            packages/shared \
+            packages/tsconfig \
+            packages/eslint-config \
+            pnpm-lock.yaml \
+            pnpm-workspace.yaml \
+            package.json \
+            tsconfig.base.json
+
+      - name: Generate checksums
+        run: |
+          cd release
+          sha256sum * > SHA256SUMS
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
         with:
-          name: ${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}
+          name: extension-${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}
           path: release/
 
   publish-chrome:
@@ -83,24 +115,31 @@ jobs:
     needs:
       - validate
       - build
+    env:
+      PLUGIN: ${{ needs.validate.outputs.plugin }}
+      VERSION: ${{ needs.validate.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v4
         with:
           node-version-file: .nvmrc
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v4
         with:
           version: 9.15.9
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
+        with:
+          name: extension-${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}
+          path: release/
+
       - name: Resolve Chrome extension id
         id: chrome
         env:
-          PLUGIN: ${{ needs.validate.outputs.plugin }}
           DARK_MODE_LITE_CHROME_EXTENSION_ID: ${{ secrets.DARK_MODE_LITE_CHROME_EXTENSION_ID }}
           TAB_STASH_CHROME_EXTENSION_ID: ${{ secrets.TAB_STASH_CHROME_EXTENSION_ID }}
           VOLUME_BOOSTER_CHROME_EXTENSION_ID: ${{ secrets.VOLUME_BOOSTER_CHROME_EXTENSION_ID }}
@@ -126,10 +165,8 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
           EXTENSION_ID: ${{ steps.chrome.outputs.extension_id }}
-          PLUGIN: ${{ needs.validate.outputs.plugin }}
-          VERSION: ${{ needs.validate.outputs.version }}
         run: |
-          npx --yes chrome-webstore-upload-cli upload \
+          pnpm exec chrome-webstore-upload-cli upload \
             --source "release/${PLUGIN}-${VERSION}-chrome-mv3.zip" \
             --no-auto-publish
 
@@ -138,34 +175,71 @@ jobs:
     needs:
       - validate
       - build
+    outputs:
+      signed: ${{ steps.amo.outputs.signed }}
+    env:
+      PLUGIN: ${{ needs.validate.outputs.plugin }}
+      VERSION: ${{ needs.validate.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v4
         with:
           node-version-file: .nvmrc
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v4
         with:
           version: 9.15.9
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Sign and publish Firefox extension
-        if: ${{ secrets.AMO_JWT_ISSUER != '' && secrets.AMO_JWT_SECRET != '' }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
+        with:
+          name: extension-${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}
+          path: release/
+
+      - name: Unpack Firefox artifact
+        run: |
+          rm -rf staging/firefox-mv3
+          mkdir -p staging/firefox-mv3
+          unzip -q "release/${PLUGIN}-${VERSION}-firefox-mv3.zip" -d staging/firefox-mv3
+
+      - name: Resolve AMO credentials
+        id: amo
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-          PLUGIN: ${{ needs.validate.outputs.plugin }}
-          VERSION: ${{ needs.validate.outputs.version }}
         run: |
-          npx --yes web-ext sign \
-            --source-dir "extensions/${PLUGIN}/.output/firefox-mv3" \
-            --artifacts-dir release \
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+            echo "::warning::AMO credentials are missing; skipping Firefox signing."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sign and publish Firefox extension
+        if: steps.amo.outputs.signed == 'true'
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          pnpm exec web-ext sign \
+            --source-dir staging/firefox-mv3 \
+            --artifacts-dir release/signed \
             --channel listed \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET"
+
+          signed_xpi="$(find release/signed -maxdepth 1 -type f -name '*.xpi' | head -1)"
+          test -n "$signed_xpi"
+          cp "$signed_xpi" "release/${PLUGIN}-${VERSION}-firefox-mv3-signed.xpi"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
+        if: steps.amo.outputs.signed == 'true'
+        with:
+          name: extension-${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}-signed
+          path: release/${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}-firefox-mv3-signed.xpi
 
   github-release:
     runs-on: ubuntu-latest
@@ -174,15 +248,40 @@ jobs:
       - build
       - publish-chrome
       - publish-firefox
+    permissions:
+      contents: write
+    env:
+      PLUGIN: ${{ needs.validate.outputs.plugin }}
+      VERSION: ${{ needs.validate.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
         with:
-          name: ${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}
-          path: release/
+          name: extension-${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}
+          path: release/build/
 
-      - uses: softprops/action-gh-release@v2
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v4
+        if: needs.publish-firefox.outputs.signed == 'true'
         with:
-          files: release/*
+          name: extension-${{ needs.validate.outputs.plugin }}-${{ needs.validate.outputs.version }}-signed
+          path: release/signed/
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release/assets
+          cp release/build/* release/assets/
+
+          if [ -f "release/signed/${PLUGIN}-${VERSION}-firefox-mv3-signed.xpi" ]; then
+            rm "release/assets/${PLUGIN}-${VERSION}-firefox-mv3.zip"
+            cp "release/signed/${PLUGIN}-${VERSION}-firefox-mv3-signed.xpi" \
+              "release/assets/${PLUGIN}-${VERSION}-firefox-mv3-signed.xpi"
+          fi
+
+          cd release/assets
+          sha256sum * > SHA256SUMS
+
+      - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v2
+        with:
+          files: release/assets/*
           generate_release_notes: true

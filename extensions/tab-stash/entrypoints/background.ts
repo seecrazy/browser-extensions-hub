@@ -1,27 +1,21 @@
+import { onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { onRuntimeMessage } from "@hub/shared/messaging";
+import {
+  collectDuplicateUrls,
+  createGroup,
+  filterStashableTabs,
+  findGroup,
+  normalizeImportedGroups,
+  removeGroup,
+  removeTab,
+  replaceGroup,
+  searchGroups,
+  tabStashDefaults,
+} from "../lib/groups";
+import { tabStashMessages } from "../lib/messages";
+import type { StashGroup } from "../lib/types";
 
-type StashedTab = {
-  id: string;
-  title: string;
-  url: string;
-  favIconUrl?: string;
-  pinned: boolean;
-};
-
-type StashGroup = {
-  schemaVersion: number;
-  id: string;
-  createdAt: number;
-  tabs: StashedTab[];
-};
-
-type TabStashSettings = {
-  schemaVersion: number;
-  includePinned: boolean;
-};
-
-const groupsStorage = createNamespacedStorage<{ schemaVersion: number; groups: StashGroup[] }>(
+const groupsStorage = createNamespacedStorage<{ schemaVersion: 1; groups: StashGroup[] }>(
   "tab-stash.groups",
   {
     schemaVersion: 1,
@@ -29,72 +23,55 @@ const groupsStorage = createNamespacedStorage<{ schemaVersion: number; groups: S
   },
 );
 
-const settingsStorage = createNamespacedStorage<TabStashSettings>("tab-stash.settings", {
-  schemaVersion: 1,
-  includePinned: false,
-});
+const settingsStorage = createNamespacedStorage("tab-stash.settings", tabStashDefaults);
 
-function isStashableUrl(url: string): boolean {
-  return !/^(chrome|edge|brave|about|moz-extension|chrome-extension|extension):/i.test(url);
-}
-
-async function stashCurrentWindow(): Promise<number> {
-  const settings = await settingsStorage.get();
+async function stashCurrentWindow(
+  label?: string,
+): Promise<{ count: number; duplicates: string[] }> {
+  const [settings, groupState] = await Promise.all([settingsStorage.get(), groupsStorage.get()]);
   const tabs = await chrome.tabs.query({
     currentWindow: true,
   });
-
-  const stashableTabs = tabs.filter((tab) => {
-    if (!tab.url || !isStashableUrl(tab.url)) {
-      return false;
-    }
-
-    return settings.includePinned || !tab.pinned;
-  });
+  const stashableTabs = filterStashableTabs(tabs, settings);
 
   if (stashableTabs.length === 0) {
-    return 0;
+    return {
+      count: 0,
+      duplicates: [],
+    };
   }
 
-  const groupId = crypto.randomUUID();
-  const group: StashGroup = {
-    schemaVersion: 1,
-    id: groupId,
+  const group = createGroup({
+    ...(label ? { label } : {}),
+    tabs: stashableTabs.map(({ id: _id, ...tab }) => tab),
     createdAt: Date.now(),
-    tabs: stashableTabs.map((tab, index) => ({
-      id: `${groupId}-${index}`,
-      title: tab.title ?? tab.url ?? "Untitled",
-      url: tab.url ?? "",
-      ...(tab.favIconUrl ? { favIconUrl: tab.favIconUrl } : {}),
-      pinned: tab.pinned,
-    })),
-  };
+  });
+  const duplicates = collectDuplicateUrls(
+    groupState.groups,
+    stashableTabs.map((tab) => tab.url),
+  );
 
-  const state = await groupsStorage.get();
   await groupsStorage.patch({
-    groups: [group, ...state.groups],
+    groups: [group, ...groupState.groups],
   });
 
-  const tabIds = stashableTabs.map((tab) => tab.id).filter((id): id is number => id !== undefined);
+  const tabIds = stashableTabs.map((tab) => tab.id);
   await chrome.tabs.remove(tabIds);
-  return group.tabs.length;
+
+  return {
+    count: group.tabs.length,
+    duplicates,
+  };
 }
 
 export default defineBackground(() => {
-  onRuntimeMessage({
-    TAB_STASH_STASH_WINDOW: async () => {
-      const count = await stashCurrentWindow();
-      return {
-        count,
-      };
-    },
-    TAB_STASH_LIST_GROUPS: async () => {
-      const state = await groupsStorage.get();
-      return state.groups;
-    },
-    TAB_STASH_RESTORE_TAB: async (payload: { groupId: string; tabId: string }) => {
-      const state = await groupsStorage.get();
-      const group = state.groups.find((candidate) => candidate.id === payload.groupId);
+  onContractMessage(tabStashMessages, {
+    TAB_STASH_STASH_WINDOW: async (payload) => stashCurrentWindow(payload?.label),
+    TAB_STASH_LIST_GROUPS: async (payload) =>
+      searchGroups((await groupsStorage.get()).groups, payload?.query ?? ""),
+    TAB_STASH_RESTORE_TAB: async (payload) => {
+      const groupState = await groupsStorage.get();
+      const group = findGroup(groupState.groups, payload.groupId);
       const tab = group?.tabs.find((candidate) => candidate.id === payload.tabId);
 
       if (!group || !tab) {
@@ -106,28 +83,17 @@ export default defineBackground(() => {
         active: false,
         pinned: tab.pinned,
       });
-      const nextTabs = group.tabs.filter((candidate) => candidate.id !== tab.id);
-      const nextGroups =
-        nextTabs.length > 0
-          ? state.groups.map((candidate) =>
-              candidate.id === group.id
-                ? {
-                    ...candidate,
-                    tabs: nextTabs,
-                  }
-                : candidate,
-            )
-          : state.groups.filter((candidate) => candidate.id !== group.id);
       await groupsStorage.patch({
-        groups: nextGroups,
+        groups: removeTab(groupState.groups, payload.groupId, payload.tabId),
       });
+
       return {
         restored: true,
       };
     },
-    TAB_STASH_RESTORE_GROUP: async (payload: { groupId: string }) => {
-      const state = await groupsStorage.get();
-      const group = state.groups.find((candidate) => candidate.id === payload.groupId);
+    TAB_STASH_RESTORE_GROUP: async (payload) => {
+      const groupState = await groupsStorage.get();
+      const group = findGroup(groupState.groups, payload.groupId);
 
       if (!group) {
         throw new Error("Stash group not found.");
@@ -142,19 +108,60 @@ export default defineBackground(() => {
       }
 
       await groupsStorage.patch({
-        groups: state.groups.filter((candidate) => candidate.id !== group.id),
+        groups: removeGroup(groupState.groups, payload.groupId),
       });
+
       return {
         restored: group.tabs.length,
       };
     },
-    TAB_STASH_DELETE_GROUP: async (payload: { groupId: string }) => {
-      const state = await groupsStorage.get();
-      await groupsStorage.patch({
-        groups: state.groups.filter((candidate) => candidate.id !== payload.groupId),
+    TAB_STASH_RENAME_GROUP: async (payload) => {
+      const groupState = await groupsStorage.get();
+      const group = findGroup(groupState.groups, payload.groupId);
+
+      if (!group) {
+        throw new Error("Stash group not found.");
+      }
+
+      const nextGroups = replaceGroup(groupState.groups, {
+        ...group,
+        label: payload.label.trim() || group.label,
       });
+      await groupsStorage.patch({
+        groups: nextGroups,
+      });
+
+      return nextGroups;
+    },
+    TAB_STASH_DELETE_GROUP: async (payload) => {
+      const groupState = await groupsStorage.get();
+      await groupsStorage.patch({
+        groups: removeGroup(groupState.groups, payload.groupId),
+      });
+
       return {
         deleted: true,
+      };
+    },
+    TAB_STASH_IMPORT_GROUPS: async (payload) => {
+      const groups = normalizeImportedGroups(payload.groups);
+      const groupState = await groupsStorage.get();
+      const existingIds = new Set(groupState.groups.map((group) => group.id));
+      const importedGroups = groups.map((group) =>
+        existingIds.has(group.id)
+          ? {
+              ...group,
+              id: `${group.id}-${Date.now()}`,
+            }
+          : group,
+      );
+
+      await groupsStorage.patch({
+        groups: [...importedGroups, ...groupState.groups],
+      });
+
+      return {
+        imported: importedGroups.length,
       };
     },
   });

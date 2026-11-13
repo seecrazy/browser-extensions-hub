@@ -1,33 +1,35 @@
 # Roadmap
 
-## 已完成
+## Completed
 
-- [x] 确定 pnpm + WXT + TypeScript 架构。
-- [x] 确定 MV3、activeTab 动态注入、权限最小化原则。
-- [x] 确定 5 个首批插件范围。
-- [x] 确定共享包边界：messaging / storage / ui。
-- [x] 确定构建、校验和 tag 发布方案。
-- [x] 搭建 Monorepo 骨架。
-- [x] 实现 `@hub/shared`。
-- [x] 实现 `_template`。
-- [x] 实现 Dark Mode Lite。
-- [x] 实现 Tab Stash。
-- [x] 实现 Volume Booster。
-- [x] 实现 Quick Translate。
-- [x] 实现 Focus Lock。
-- [x] 建立 CI。
-- [x] 建立 release workflow。
-- [x] 通过本地构建、typecheck、lint、test 和 manifest 校验。
+- [x] pnpm + WXT + TypeScript architecture.
+- [x] MV3 and minimum-permission policy.
+- [x] Five initial plugin definitions.
+- [x] Shared messaging/storage/UI boundaries.
+- [x] Monorepo skeleton and tag-driven release design.
+- [x] Initial five plugin implementations.
+- [x] Local build, typecheck, lint, tests, and manifest validation.
+- [x] Iteration 2 release artifact flow.
+- [x] Single-plugin/browser manifest validation.
+- [x] Vitest and shared/plugin pure-logic tests.
+- [x] Plugin message contracts and local lib modules.
+- [x] Plugin UX iteration.
+- [x] Turbo dead-config removal.
+- [x] Pinned publish CLIs.
+- [x] CI security, lint, audit, and dependency review.
+- [x] Repository process docs and store listing skeletons.
+- [x] Required-size extension icons.
 
-## 进行中
+## In progress
 
-- [ ] 本地浏览器手工验收。
+- [ ] Manual browser acceptance for all plugins.
+- [ ] Real-store listing review.
+- [ ] Real screenshots.
 
-## 未开始
+## Not started
 
-- [ ] 本地加载验证。
-- [ ] 商店 listing 文案。
-- [ ] 截图与隐私政策页面。
-- [ ] Chrome Web Store 首次提交。
-- [ ] Firefox AMO 首次提交。
-- [ ] Playwright extension E2E。
+- [ ] Chrome Web Store first submission.
+- [ ] Firefox AMO first submission.
+- [ ] Playwright extension E2E.
+- [ ] Optional translation provider expansion.
+- [ ] Optional Tab Stash cloud-free sync via import/export conventions.

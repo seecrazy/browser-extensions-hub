@@ -14,17 +14,23 @@ export type NamespacedStorage<T extends Versioned> = {
 };
 
 type MigrationFn<T extends Versioned> = (value: Record<string, unknown>) => T;
+type ValidationFn<T extends Versioned> = (value: unknown) => T;
+
+export type StorageOptions<T extends Versioned> = {
+  migrate?: MigrationFn<T>;
+  validate?: ValidationFn<T>;
+};
 
 export function createNamespacedStorage<T extends Versioned>(
   namespace: string,
   defaults: T,
   area: StorageAreaName = "local",
-  migrate?: MigrationFn<T>,
+  options: StorageOptions<T> = {},
 ): NamespacedStorage<T> {
   const storageArea = chrome.storage[area];
 
   const normalize = (value: unknown): T => {
-    if (typeof value !== "object" || value === null) {
+    if (value === undefined || value === null) {
       return { ...defaults };
     }
 
@@ -33,9 +39,13 @@ export function createNamespacedStorage<T extends Versioned>(
     if (
       typeof stored.schemaVersion === "number" &&
       stored.schemaVersion !== defaults.schemaVersion &&
-      migrate
+      options.migrate
     ) {
-      return migrate(stored);
+      return options.migrate(stored);
+    }
+
+    if (options.validate) {
+      return options.validate(stored);
     }
 
     return {
@@ -44,9 +54,26 @@ export function createNamespacedStorage<T extends Versioned>(
     } as T;
   };
 
+  const persist = async (value: T): Promise<void> => {
+    await storageArea.set({
+      [namespace]: value,
+    });
+  };
+
   const read = async (): Promise<T> => {
     const result = await storageArea.get(namespace);
-    return normalize(result[namespace]);
+    const normalized = normalize(result[namespace]);
+
+    if (
+      options.migrate &&
+      typeof result[namespace] === "object" &&
+      result[namespace] !== null &&
+      (result[namespace] as { schemaVersion?: unknown }).schemaVersion !== defaults.schemaVersion
+    ) {
+      await persist(normalized);
+    }
+
+    return normalized;
   };
 
   return {
@@ -58,15 +85,16 @@ export function createNamespacedStorage<T extends Versioned>(
         ...patch,
         schemaVersion: defaults.schemaVersion,
       };
-      await storageArea.set({
-        [namespace]: next,
-      });
+
+      if (options.validate) {
+        return options.validate(next);
+      }
+
+      await persist(next);
       return next;
     },
     async reset() {
-      await storageArea.set({
-        [namespace]: defaults,
-      });
+      await persist(defaults);
       return defaults;
     },
     subscribe(listener) {

@@ -1,122 +1,63 @@
+import { onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { onRuntimeMessage } from "@hub/shared/messaging";
+import { addDomain, normalizeDomainList, removeDomain } from "../lib/domains";
+import { buildDnrRules, DNR_RULE_BASE_ID, DNR_RULE_MAX_COUNT } from "../lib/dnr";
+import { focusLockMessages } from "../lib/messages";
+import { hashPassword, verifyPassword } from "../lib/password";
+import { focusLockDefaults, validateFocusLockSettings } from "../lib/types";
+import type { FocusLockSettings, FocusLockState } from "../lib/types";
 
-type FocusLockSettings = {
-  schemaVersion: number;
-  domains: string[];
-  passwordHash?: string;
-  passwordSalt?: string;
-  unlockUntil?: number;
-  failedAttempts: number;
-  lockoutUntil?: number;
-};
-
-const settingsStorage = createNamespacedStorage<FocusLockSettings>("focus-lock.settings", {
-  schemaVersion: 1,
-  domains: [],
-  failedAttempts: 0,
+const settingsStorage = createNamespacedStorage("focus-lock.settings", focusLockDefaults, "local", {
+  validate: validateFocusLockSettings,
 });
 
-const DNR_RULE_ID = 1;
-const PBKDF2_ITERATIONS = 100000;
 const FAILED_ATTEMPT_LIMIT = 5;
 const LOCKOUT_DURATION_MS = 5 * 60 * 1000;
 const UNLOCK_DURATION_MS = 5 * 60 * 1000;
 const COOLDOWN_DURATION_MS = 60 * 1000;
 
-function bytesToBase64(bytes: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(bytes)));
-}
-
-function base64ToBytes(value: string): Uint8Array {
-  const binary = atob(value);
-  const bytes = new Uint8Array(binary.length);
-
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-
-  return bytes;
-}
-
-function timingSafeEqual(left: string, right: string): boolean {
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  let difference = 0;
-
-  for (let index = 0; index < left.length; index += 1) {
-    difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
-  }
-
-  return difference === 0;
-}
-
-async function hashPassword(password: string, saltBase64: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"],
-  );
-  const derivedBits = await crypto.subtle.deriveBits(
-    {
-      name: "PBKDF2",
-      hash: "SHA-256",
-      salt: base64ToBytes(saltBase64),
-      iterations: PBKDF2_ITERATIONS,
-    },
-    keyMaterial,
-    256,
-  );
-  return bytesToBase64(derivedBits);
-}
-
-async function isUnlockActive(): Promise<boolean> {
-  const settings = await settingsStorage.get();
-  return typeof settings.unlockUntil === "number" && settings.unlockUntil > Date.now();
+function stateFromSettings(settings: FocusLockSettings): FocusLockState {
+  return {
+    domains: settings.domains,
+    hasPassword: Boolean(settings.passwordHash),
+    failedAttempts: settings.failedAttempts,
+    ...(settings.lockoutUntil ? { lockedUntil: settings.lockoutUntil } : {}),
+    unlockedDomains: Object.entries(settings.unlockedUntil)
+      .filter(([domain, until]) => settings.domains.includes(domain) && until > Date.now())
+      .map(([domain]) => domain),
+  };
 }
 
 async function syncDnrRules(): Promise<void> {
   const settings = await settingsStorage.get();
-  const unlocked = await isUnlockActive();
-  const domains = unlocked ? [] : settings.domains;
-
-  if (domains.length === 0) {
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [DNR_RULE_ID],
-    });
-    return;
-  }
+  const { rules } = buildDnrRules(settings, Date.now());
+  const existing = await chrome.declarativeNetRequest.getDynamicRules();
+  const removeRuleIds = existing
+    .map((rule) => rule.id)
+    .filter(
+      (ruleId) => ruleId >= DNR_RULE_BASE_ID && ruleId < DNR_RULE_BASE_ID + DNR_RULE_MAX_COUNT,
+    );
 
   await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: [DNR_RULE_ID],
-    addRules: [
-      {
-        id: DNR_RULE_ID,
-        priority: 1,
-        action: {
-          type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
-          redirect: {
-            extensionPath: "/blocked.html",
-          },
-        },
-        condition: {
-          requestDomains: domains,
-          resourceTypes: [chrome.declarativeNetRequest.ResourceType.MAIN_FRAME],
-        },
-      },
-    ],
+    removeRuleIds,
+    addRules: rules,
   });
 }
 
-async function scheduleRelock(unlockUntil: number): Promise<void> {
-  await chrome.alarms.create("focus-lock-relock", {
+async function scheduleRelock(domain: string, unlockUntil: number): Promise<void> {
+  await chrome.alarms.create(`focus-lock-relock:${domain}`, {
     when: unlockUntil,
   });
+}
+
+function unlockPatch(settings: FocusLockSettings, domains: string[], unlockUntil: number) {
+  return domains.reduce<Record<string, number>>(
+    (accumulator, domain) => {
+      accumulator[domain] = unlockUntil;
+      return accumulator;
+    },
+    { ...settings.unlockedUntil },
+  );
 }
 
 export default defineBackground(() => {
@@ -127,9 +68,23 @@ export default defineBackground(() => {
     void syncDnrRules();
   });
   chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "focus-lock-relock") {
-      void syncDnrRules();
+    if (!alarm.name.startsWith("focus-lock-relock:")) {
+      return;
     }
+
+    const domain = alarm.name.slice("focus-lock-relock:".length);
+    void settingsStorage
+      .get()
+      .then((settings) =>
+        settingsStorage.patch({
+          unlockedUntil: Object.fromEntries(
+            Object.entries(settings.unlockedUntil).filter(
+              ([candidate, until]) => candidate !== domain || until > Date.now(),
+            ),
+          ),
+        }),
+      )
+      .then(() => syncDnrRules());
   });
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && "focus-lock.settings" in changes) {
@@ -137,68 +92,63 @@ export default defineBackground(() => {
     }
   });
 
-  onRuntimeMessage({
-    FOCUS_LOCK_GET_STATE: async () => {
+  onContractMessage(focusLockMessages, {
+    FOCUS_LOCK_GET_STATE: async () => stateFromSettings(await settingsStorage.get()),
+    FOCUS_LOCK_ADD_DOMAIN: async (payload) => {
       const settings = await settingsStorage.get();
-      return {
-        domains: settings.domains,
-        hasPassword: Boolean(settings.passwordHash),
-        failedAttempts: settings.failedAttempts,
-        lockedUntil: settings.lockoutUntil,
-        unlockUntil: settings.unlockUntil,
-      };
-    },
-    FOCUS_LOCK_ADD_DOMAIN: async (payload: { domain: string }) => {
-      const settings = await settingsStorage.get();
-      const domain = payload.domain.trim().toLowerCase();
-
-      if (!/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(domain)) {
-        throw new Error("Please enter a valid domain, such as example.com.");
-      }
-
-      if (settings.domains.includes(domain)) {
-        return {
-          domains: settings.domains,
-        };
-      }
-
-      const nextDomains = [...settings.domains, domain].sort();
+      const domains = addDomain(settings.domains, payload.domain);
       await settingsStorage.patch({
-        domains: nextDomains,
+        domains,
       });
       await syncDnrRules();
+
       return {
-        domains: nextDomains,
+        domains,
       };
     },
-    FOCUS_LOCK_REMOVE_DOMAIN: async (payload: { domain: string }) => {
+    FOCUS_LOCK_REMOVE_DOMAIN: async (payload) => {
       const settings = await settingsStorage.get();
-      const nextDomains = settings.domains.filter((domain) => domain !== payload.domain);
+      const domains = removeDomain(settings.domains, payload.domain);
+      const { [payload.domain]: _removed, ...unlockedUntil } = settings.unlockedUntil;
       await settingsStorage.patch({
-        domains: nextDomains,
+        domains,
+        unlockedUntil,
       });
       await syncDnrRules();
+
       return {
-        domains: nextDomains,
+        domains,
       };
     },
-    FOCUS_LOCK_SET_PASSWORD: async (payload: { currentPassword: string; newPassword: string }) => {
+    FOCUS_LOCK_IMPORT_DOMAINS: async (payload) => {
+      const domains = normalizeDomainList(payload.domains);
+      await settingsStorage.patch({
+        domains,
+      });
+      await syncDnrRules();
+
+      return {
+        domains,
+      };
+    },
+    FOCUS_LOCK_EXPORT_DOMAINS: async () => ({
+      domains: (await settingsStorage.get()).domains,
+    }),
+    FOCUS_LOCK_SET_PASSWORD: async (payload) => {
       const settings = await settingsStorage.get();
 
       if (settings.passwordHash) {
-        if (!payload.currentPassword) {
+        if (!payload.currentPassword || !settings.passwordSalt) {
           throw new Error("Current password is required.");
         }
 
-        const currentSalt = settings.passwordSalt;
+        const isValid = await verifyPassword(
+          payload.currentPassword,
+          settings.passwordHash,
+          settings.passwordSalt,
+        );
 
-        if (!currentSalt) {
-          throw new Error("Stored password is invalid.");
-        }
-
-        const currentHash = await hashPassword(payload.currentPassword, currentSalt);
-
-        if (!timingSafeEqual(currentHash, settings.passwordHash)) {
+        if (!isValid) {
           throw new Error("Current password is incorrect.");
         }
       }
@@ -207,19 +157,48 @@ export default defineBackground(() => {
         throw new Error("Password must be at least 8 characters.");
       }
 
-      const saltBytes = crypto.getRandomValues(new Uint8Array(16));
-      const salt = bytesToBase64(saltBytes.buffer);
-      const hash = await hashPassword(payload.newPassword, salt);
+      const { hash, salt } = await hashPassword(payload.newPassword);
       await settingsStorage.patch({
         passwordHash: hash,
         passwordSalt: salt,
         failedAttempts: 0,
       });
+
       return {
         hasPassword: true,
       };
     },
-    FOCUS_LOCK_UNLOCK: async (payload: { password: string }) => {
+    FOCUS_LOCK_REMOVE_PASSWORD: async (payload) => {
+      const settings = await settingsStorage.get();
+
+      if (!settings.passwordHash || !settings.passwordSalt) {
+        throw new Error("No password has been set.");
+      }
+
+      const isValid = await verifyPassword(
+        payload.currentPassword,
+        settings.passwordHash,
+        settings.passwordSalt,
+      );
+
+      if (!isValid) {
+        throw new Error("Current password is incorrect.");
+      }
+
+      await chrome.storage.local.set({
+        "focus-lock.settings": {
+          ...settings,
+          passwordHash: undefined,
+          passwordSalt: undefined,
+          failedAttempts: 0,
+        },
+      });
+
+      return {
+        hasPassword: false,
+      };
+    },
+    FOCUS_LOCK_UNLOCK: async (payload) => {
       const settings = await settingsStorage.get();
       const now = Date.now();
 
@@ -231,9 +210,13 @@ export default defineBackground(() => {
         throw new Error("No password has been set.");
       }
 
-      const candidateHash = await hashPassword(payload.password, settings.passwordSalt);
+      const isValid = await verifyPassword(
+        payload.password,
+        settings.passwordHash,
+        settings.passwordSalt,
+      );
 
-      if (!timingSafeEqual(candidateHash, settings.passwordHash)) {
+      if (!isValid) {
         const failedAttempts = settings.failedAttempts + 1;
         const lockoutUntil =
           failedAttempts >= FAILED_ATTEMPT_LIMIT ? now + LOCKOUT_DURATION_MS : undefined;
@@ -245,17 +228,23 @@ export default defineBackground(() => {
       }
 
       const unlockUntil = now + UNLOCK_DURATION_MS;
+      const domains = payload.domain ? [payload.domain] : settings.domains;
       await settingsStorage.patch({
         failedAttempts: 0,
-        unlockUntil,
+        unlockedUntil: unlockPatch(settings, domains, unlockUntil),
       });
       await syncDnrRules();
-      await scheduleRelock(unlockUntil);
+
+      for (const domain of domains) {
+        await scheduleRelock(domain, unlockUntil);
+      }
+
       return {
         unlockUntil,
+        ...(payload.domain ? { domain: payload.domain } : {}),
       };
     },
-    FOCUS_LOCK_START_COOLDOWN: async () => {
+    FOCUS_LOCK_START_COOLDOWN: async (payload) => {
       const settings = await settingsStorage.get();
 
       if (settings.passwordHash) {
@@ -263,13 +252,19 @@ export default defineBackground(() => {
       }
 
       const unlockUntil = Date.now() + COOLDOWN_DURATION_MS;
+      const domains = payload.domain ? [payload.domain] : settings.domains;
       await settingsStorage.patch({
-        unlockUntil,
+        unlockedUntil: unlockPatch(settings, domains, unlockUntil),
       });
       await syncDnrRules();
-      await scheduleRelock(unlockUntil);
+
+      for (const domain of domains) {
+        await scheduleRelock(domain, unlockUntil);
+      }
+
       return {
         unlockUntil,
+        ...(payload.domain ? { domain: payload.domain } : {}),
       };
     },
   });
