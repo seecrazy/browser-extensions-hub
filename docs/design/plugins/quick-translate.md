@@ -16,7 +16,7 @@ Translate user-selected text in an activated tab with a local bubble.
 
 - Popup handles target-language selection and activation.
 - Content script listens for text selection and shows a Shadow DOM bubble.
-- Background calls Google Translate.
+- Background calls Google Translate with an 8-second request timeout and a second Google endpoint fallback.
 
 ## Data and state
 

@@ -38,7 +38,7 @@ pnpm test:coverage
 ## Next steps
 
 1. Load all ten builds in Chrome and Firefox and complete `docs/qa/<plugin>.md`.
-2. Verify Quick Translate against the real Google endpoint.
+2. Verify Quick Translate against real Google endpoints and capture any service-worker error.
 3. Verify Privacy Cleaner on a disposable HTTP origin and Screenshot Annotator copy/download flows.
 4. Configure GitHub Environments `chrome-publish` and `firefox-publish` before real store publishing.
 5. Review generated icons with design and replace if a richer visual identity is needed.

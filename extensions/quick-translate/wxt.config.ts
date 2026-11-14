@@ -9,7 +9,7 @@ export default defineConfig({
     description:
       "Select text in an activated tab and get an instant translation. No broad host permissions.",
     permissions: ["activeTab", "scripting", "storage"],
-    host_permissions: ["https://translate.googleapis.com/*"],
+    host_permissions: ["https://translate.googleapis.com/*", "https://clients5.google.com/*"],
 
     ...(browser === "firefox"
       ? {

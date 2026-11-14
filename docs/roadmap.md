@@ -103,3 +103,4 @@
 ## Revert
 
 - [x] Revert Quick Translate to first-version tab-only scope.
+- [x] Add translation timeout and Google endpoint fallback.
