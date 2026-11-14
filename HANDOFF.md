@@ -18,6 +18,7 @@ Iteration 4 is implemented on `main`.
 - Quick Translate supports one-tab, optional per-site, and optional all-site access without default broad host permissions.
 - Quick Translate one-tab activation sends an in-memory temporary-access message to the content script.
 - Quick Translate has a modern compact popup for language and access controls.
+- Shared advanced-settings disclosure keeps low-frequency controls collapsed.
 - Store readiness validation, QA checklists, per-plugin docs, coverage, CodeQL, release smoke checks, and a Playwright E2E skeleton are present.
 - Store listing, privacy, permission, and screenshot documents exist for all shipped plugins.
 - Turbo dead config has been removed; builds use `pnpm -r`.

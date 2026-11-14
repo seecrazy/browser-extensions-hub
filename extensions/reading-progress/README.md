@@ -16,6 +16,10 @@ Popup injects content script; content script listens to scroll/resize and update
 
 `activeTab`, `scripting`, `storage`.
 
+## Configuration
+
+Enable state and color are always visible. Height, position, and offsets are in **Advanced appearance**.
+
 ## Data model
 
 `reading-progress.settings.sites[origin]` stores enabled state and style settings.

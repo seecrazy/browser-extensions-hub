@@ -1,6 +1,6 @@
 import { getActiveTab, injectRuntimeContentScript } from "@hub/shared/injection";
 import { createTabMessageSender } from "@hub/shared/messaging";
-import { createStatusView } from "@hub/shared/ui";
+import { createAdvancedSettings, createStatusView } from "@hub/shared/ui";
 import "@hub/shared/ui/styles.css";
 import { readingProgressMessages } from "../../lib/messages";
 import type { ReadingProgressSiteState } from "../../lib/types";
@@ -14,6 +14,25 @@ const offsetTopInput = document.querySelector<HTMLInputElement>("#offset-top");
 const offsetBottomInput = document.querySelector<HTMLInputElement>("#offset-bottom");
 const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
 const sendMessage = createTabMessageSender(readingProgressMessages);
+
+const heightLabel = document.querySelector<HTMLLabelElement>('label[for="height"]');
+const positionLabel = document.querySelector<HTMLLabelElement>('label[for="position"]');
+const offsetTopLabel = document.querySelector<HTMLLabelElement>('label[for="offset-top"]');
+const offsetBottomLabel = document.querySelector<HTMLLabelElement>('label[for="offset-bottom"]');
+const advancedSettings = createAdvancedSettings(
+  [
+    heightLabel,
+    heightInput,
+    positionLabel,
+    positionInput,
+    offsetTopLabel,
+    offsetTopInput,
+    offsetBottomLabel,
+    offsetBottomInput,
+  ].filter((element): element is NonNullable<typeof element> => element !== null),
+  { label: "Advanced appearance" },
+);
+document.querySelector("#advanced")?.append(advancedSettings.root);
 
 function renderState(state: ReadingProgressSiteState): void {
   if (originLabel) {

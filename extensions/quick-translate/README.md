@@ -7,7 +7,7 @@ Translate user-selected text in an approved tab with a local bubble.
 - No default page access.
 - Support one-tab and per-site activation.
 - Use Shadow DOM for UI isolation.
-- Cache results and timeout requests.
+- Cache results and configurable timeout requests.
 - Disclose and isolate the remote translation request.
 
 ## How it works
@@ -20,6 +20,10 @@ Translate user-selected text in an approved tab with a local bubble.
 ## Permissions
 
 `activeTab`, `scripting`, `storage`, `https://translate.googleapis.com/*`; optional `http://*/*` and `https://*/*` are requested per site and never granted by default.
+
+## Configuration
+
+Essential language and access controls are always visible. Request timeout is in **Advanced request settings**.
 
 ## Data model
 

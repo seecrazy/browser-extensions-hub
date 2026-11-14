@@ -17,6 +17,10 @@ Popup enables the content script; content script listens for copy events and sav
 
 `activeTab`, `scripting`, `storage`, `clipboardWrite`.
 
+## Configuration
+
+Site access and history are always visible. Retention days are in **Advanced retention**.
+
 ## Data model
 
 `clipboard-history.settings` stores history, disabled origins, and expiry days.

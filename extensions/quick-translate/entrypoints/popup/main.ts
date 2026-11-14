@@ -3,7 +3,7 @@ import { createTabMessageSender } from "@hub/shared/messaging";
 import "@hub/shared/ui/styles.css";
 import "./style.css";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { createStatusView } from "@hub/shared/ui";
+import { createAdvancedSettings, createLabel, createStatusView } from "@hub/shared/ui";
 import {
   disableAllSitesAccess,
   disableSiteAccess,
@@ -30,6 +30,28 @@ const disableSiteButton = document.querySelector<HTMLButtonElement>("#disable-si
 const enableAllButton = document.querySelector<HTMLButtonElement>("#enable-all");
 const disableAllButton = document.querySelector<HTMLButtonElement>("#disable-all");
 const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
+const timeoutLabel = createLabel("Request timeout", "timeout");
+const timeoutSelect = document.createElement("select");
+timeoutSelect.id = "timeout";
+timeoutSelect.className = "hub-select";
+const timeoutOptions: Array<[number, string]> = [
+  [2000, "2 seconds"],
+  [6000, "6 seconds"],
+  [10000, "10 seconds"],
+  [15000, "15 seconds"],
+  [20000, "20 seconds"],
+];
+
+for (const [value, label] of timeoutOptions) {
+  const option = document.createElement("option");
+  option.value = String(value);
+  option.textContent = label;
+  timeoutSelect.append(option);
+}
+const timeoutAdvanced = createAdvancedSettings([timeoutLabel, timeoutSelect], {
+  label: "Advanced request settings",
+});
+document.querySelector("#advanced")?.append(timeoutAdvanced.root);
 const sendTabMessage = createTabMessageSender(quickTranslateMessages);
 
 let currentOrigin: string | null = null;
@@ -91,6 +113,10 @@ async function loadState(): Promise<void> {
     languageSelect.value = settings.targetLanguage;
   }
 
+  if (timeoutSelect) {
+    timeoutSelect.value = String(settings.timeoutMs);
+  }
+
   if (currentOrigin) {
     const [siteGranted, allGranted] = await Promise.all([
       isSitePermissionGranted(currentOrigin),
@@ -119,6 +145,13 @@ languageSelect?.addEventListener("change", async () => {
     targetLanguage: languageSelect.value,
   });
   statusView.set("Saved.");
+});
+
+timeoutSelect?.addEventListener("change", async () => {
+  await settingsStorage.patch({
+    timeoutMs: Number(timeoutSelect.value),
+  });
+  statusView.set("Saved request timeout.");
 });
 
 activateButton?.addEventListener("click", async () => {

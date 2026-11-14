@@ -1,6 +1,6 @@
 import { injectRuntimeContentScript } from "@hub/shared/injection";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { createStatusView } from "@hub/shared/ui";
+import { createAdvancedSettings, createLabel, createStatusView } from "@hub/shared/ui";
 import { browser } from "wxt/browser";
 import "@hub/shared/ui/styles.css";
 import {
@@ -24,6 +24,11 @@ const searchInput = document.querySelector<HTMLInputElement>("#search");
 const expiryInput = document.querySelector<HTMLInputElement>("#expiry");
 const historyList = document.querySelector<HTMLUListElement>("#history");
 const clearButton = document.querySelector<HTMLButtonElement>("#clear");
+const expiryLabel = createLabel("Keep items for days", "expiry");
+const expiryAdvanced = createAdvancedSettings([expiryLabel, expiryInput as HTMLInputElement], {
+  label: "Advanced retention",
+});
+document.querySelector("#advanced")?.append(expiryAdvanced.root);
 const storage = createNamespacedStorage("clipboard-history.settings", clipboardDefaults, "local", {
   validate: validateClipboardSettings,
 });

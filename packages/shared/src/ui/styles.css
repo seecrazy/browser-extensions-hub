@@ -314,3 +314,88 @@ body::before {
     scroll-behavior: auto !important;
   }
 }
+
+.hub-disclosure {
+  margin-top: 12px;
+}
+
+.hub-disclosure-summary,
+.hub-advanced-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  color: var(--hub-ink-soft);
+  font-family: var(--hub-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: transparent;
+  border: 1px dashed var(--hub-line-strong);
+  border-radius: var(--hub-radius-sm);
+  list-style: none;
+  transition:
+    color 180ms var(--hub-ease),
+    border-color 180ms var(--hub-ease),
+    background 180ms var(--hub-ease);
+}
+
+.hub-disclosure-summary::-webkit-details-marker,
+.hub-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.hub-disclosure-summary::before,
+.hub-advanced-summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--hub-signal);
+  transform: rotate(0deg);
+  transition: transform 180ms var(--hub-ease);
+}
+
+.hub-disclosure[open] > summary::before,
+.hub-advanced[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.hub-disclosure-summary:hover,
+.hub-advanced-summary:hover {
+  color: var(--hub-ink);
+  background: rgb(255 227 143 / 38%);
+}
+
+.hub-disclosure-summary:focus-visible,
+.hub-advanced-summary:focus-visible {
+  outline: 3px solid var(--hub-cobalt);
+  outline-offset: 2px;
+}
+
+.hub-disclosure-content,
+.hub-advanced-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 11px;
+  padding: 12px;
+  color: var(--hub-surface-ink);
+  background: rgb(255 249 236 / 70%);
+  border: 1px solid var(--hub-line);
+  border-radius: var(--hub-radius-sm);
+  animation: hub-rise 420ms var(--hub-ease) both;
+}
+
+.hub-advanced {
+  padding-top: 4px;
+}
+
+.hub-advanced[open] .hub-advanced-summary {
+  color: var(--hub-ink);
+  background: rgb(255 227 143 / 48%);
+  border-style: solid;
+}

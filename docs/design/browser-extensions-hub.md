@@ -1067,3 +1067,7 @@ The popup UI is upgraded to a compact modern control surface with clear activati
 - 深度：硬偏移阴影、registration marks、网格纹理。
 - 动效：一次编排式 staggered load，按钮和 chip 有触觉反馈。
 - 所有普通扩展页面继承 `@hub/shared/ui/styles.css` tokens。
+
+## Iteration 7 设计结论：Progressive settings disclosure
+
+配置 UI 使用共享 progressive disclosure 模式。基础控件默认可见；低频、技术性控件放入 **Advanced settings** 收起区。组件使用 native `<details>`，并继承 editorial UI 系统。

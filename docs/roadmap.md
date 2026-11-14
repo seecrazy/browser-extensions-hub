@@ -91,3 +91,10 @@
 - [x] Shared surface refresh
 - [x] Quick Translate popup alignment
 - [x] New Tab Dashboard alignment
+
+## Iteration 7
+
+- [x] Shared advanced settings disclosure
+- [x] Quick Translate advanced timeout
+- [x] Reading Progress advanced appearance
+- [x] Clipboard advanced retention
