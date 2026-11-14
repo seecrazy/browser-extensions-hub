@@ -1,26 +1,16 @@
 body {
-  width: 380px;
-  margin: 0;
-  color: #f8fafc;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  background: radial-gradient(circle at 0% 0%, rgb(59 130 246 / 22%), transparent 42%),
-    radial-gradient(circle at 100% 0%, rgb(168 85 247 / 20%), transparent 46%),
-    linear-gradient(160deg, #020617 0%, #0b1120 52%, #101828 100%);
+  font-size: 14px;
 }
 
 .qt-shell {
+  max-width: 380px;
+  margin: 0 auto;
   padding: 18px;
 }
 
 .qt-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
@@ -34,55 +24,64 @@ body {
 
 .qt-brand-icon {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   place-items: center;
-  color: #e0f2fe;
-  font-size: 14px;
+  color: var(--hub-surface);
+  font-family: var(--hub-font-display);
+  font-size: 15px;
   font-weight: 800;
-  background: linear-gradient(135deg, #0ea5e9, #6366f1);
-  border-radius: 14px;
-  box-shadow: 0 8px 20px rgb(14 165 233 / 24%);
+  letter-spacing: -0.04em;
+  background: var(--hub-signal);
+  border: 2px solid var(--hub-ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--hub-ink);
+  transform: rotate(-3deg);
 }
 
 .qt-header h1 {
   margin: 0;
-  font-size: 17px;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-family: var(--hub-font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
 }
 
 .qt-header p {
-  margin: 3px 0 0;
-  color: #94a3b8;
-  font-size: 11px;
+  margin: 5px 0 0;
+  color: var(--hub-ink-soft);
+  font-family: var(--hub-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
 }
 
 .qt-card {
+  position: relative;
   padding: 14px;
-  background: rgb(15 23 42 / 78%);
-  border: 1px solid rgb(148 163 184 / 18%);
-  border-radius: 16px;
-  box-shadow: 0 16px 38px rgb(2 6 23 / 28%);
-  backdrop-filter: blur(10px);
+  color: var(--hub-surface-ink);
+  background: var(--hub-surface);
+  border: 2px solid var(--hub-ink);
+  border-radius: var(--hub-radius);
+  box-shadow: var(--hub-shadow);
+  animation: hub-rise 520ms var(--hub-ease) both;
+}
+
+.qt-card:nth-of-type(2) {
+  animation-delay: 70ms;
+}
+
+.qt-card:nth-of-type(3) {
+  animation-delay: 140ms;
 }
 
 .qt-card + .qt-card {
   margin-top: 12px;
 }
 
-.qt-card h2 {
-  margin: 0 0 12px;
-  color: #cbd5e1;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .qt-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 8px;
@@ -91,10 +90,11 @@ body {
 .qt-label {
   display: block;
   margin-bottom: 7px;
-  color: #94a3b8;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
+  color: var(--hub-ink-soft);
+  font-family: var(--hub-font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
@@ -102,8 +102,9 @@ body {
   display: block;
   max-width: 210px;
   overflow: hidden;
-  color: #e2e8f0;
-  font-size: 13px;
+  color: var(--hub-ink);
+  font-family: var(--hub-font-mono);
+  font-size: 12px;
   text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -111,63 +112,69 @@ body {
 
 .qt-select {
   width: 100%;
-  padding: 10px 12px;
-  color: #f8fafc;
-  background: rgb(2 6 23 / 72%);
-  border: 1px solid rgb(148 163 184 / 24%);
-  border-radius: 12px;
+  padding: 9px 11px;
+  color: var(--hub-ink);
+  font-family: var(--hub-font-body);
+  font-size: 15px;
+  background: var(--hub-surface);
+  border: 2px solid var(--hub-ink);
+  border-radius: var(--hub-radius-sm);
   outline: none;
 }
 
 .qt-select:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgb(56 189 248 / 16%);
+  border-color: var(--hub-signal);
+  box-shadow: 3px 3px 0 var(--hub-focus);
 }
 
 .qt-chip {
   display: inline-flex;
   align-items: center;
-  padding: 4px 9px;
-  color: #cbd5e1;
+  padding: 3px 8px;
+  color: var(--hub-ink);
+  font-family: var(--hub-font-mono);
   font-size: 10px;
-  font-weight: 700;
-  background: rgb(148 163 184 / 12%);
-  border: 1px solid rgb(148 163 184 / 20%);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  background: var(--hub-highlight);
+  border: 1px solid var(--hub-ink);
   border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--hub-ink);
   white-space: nowrap;
 }
 
 .qt-chip[data-tone="active"] {
-  color: #86efac;
-  background: rgb(34 197 94 / 12%);
-  border-color: rgb(34 197 94 / 28%);
+  color: var(--hub-surface);
+  background: var(--hub-moss);
 }
 
 .qt-chip[data-tone="all"] {
-  color: #c4b5fd;
-  background: rgb(139 92 246 / 14%);
-  border-color: rgb(139 92 246 / 30%);
+  color: var(--hub-surface);
+  background: var(--hub-cobalt);
 }
 
 .qt-chip[data-tone="muted"] {
-  color: #94a3b8;
+  color: var(--hub-ink-soft);
+  background: transparent;
+  box-shadow: none;
 }
 
 .qt-status {
-  min-height: 17px;
+  min-height: 18px;
   margin: 10px 0 0;
-  color: #94a3b8;
-  font-size: 12px;
-  line-height: 1.4;
+  color: var(--hub-ink-soft);
+  font-family: var(--hub-font-mono);
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .qt-status[data-tone="error"] {
-  color: #fca5a5;
+  color: var(--hub-rust);
 }
 
 .qt-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -176,72 +183,80 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  min-height: 58px;
+  min-height: 62px;
   padding: 10px 12px;
-  color: #f8fafc;
+  color: var(--hub-ink);
+  font-family: var(--hub-font-body);
   text-align: left;
   cursor: pointer;
-  background: rgb(30 41 59 / 72%);
-  border: 1px solid rgb(148 163 184 / 16%);
-  border-radius: 13px;
+  background: var(--hub-surface);
+  border: 2px solid var(--hub-ink);
+  border-radius: var(--hub-radius-sm);
+  box-shadow: var(--hub-shadow-sm);
   transition:
-    transform 140ms ease,
-    border-color 140ms ease,
-    background 140ms ease;
+    transform 160ms var(--hub-ease),
+    box-shadow 160ms var(--hub-ease);
 }
 
 .qt-button span {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 750;
+  font-variation-settings: "opsz" 18;
 }
 
 .qt-button small {
-  color: #94a3b8;
-  font-size: 10px;
+  color: var(--hub-ink-soft);
+  font-family: var(--hub-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .qt-button:hover {
-  transform: translateY(-1px);
-  border-color: rgb(148 163 184 / 34%);
-  background: rgb(51 65 85 / 78%);
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 rgb(24 20 16 / 92%);
 }
 
-.qt-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+.qt-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgb(24 20 16 / 92%);
+}
+
+.qt-button:focus-visible {
+  outline: 3px solid var(--hub-cobalt);
+  outline-offset: 2px;
 }
 
 .qt-button--primary {
-  background: linear-gradient(135deg, #0ea5e9, #6366f1);
-  border-color: transparent;
-  box-shadow: 0 10px 22px rgb(14 165 233 / 22%);
-}
-
-.qt-button--primary:hover {
-  background: linear-gradient(135deg, #38bdf8, #818cf8);
+  color: var(--hub-surface);
+  background: var(--hub-signal);
 }
 
 .qt-button--secondary {
-  color: #e0f2fe;
-  background: rgb(14 165 233 / 12%);
-  border-color: rgb(14 165 233 / 30%);
+  background: var(--hub-highlight);
 }
 
 .qt-button--ghost {
-  color: #cbd5e1;
   background: transparent;
 }
 
 .qt-button--danger {
-  color: #fecdd3;
-  background: rgb(244 63 94 / 12%);
-  border-color: rgb(244 63 94 / 28%);
+  color: var(--hub-surface);
+  background: var(--hub-rust);
 }
 
 .qt-note {
   margin: 12px 0 0;
-  color: #64748b;
+  color: var(--hub-ink-soft);
+  font-family: var(--hub-font-mono);
   font-size: 10px;
-  line-height: 1.5;
+  line-height: 1.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qt-card,
+  .qt-button {
+    animation: none;
+    transition: none;
+  }
 }

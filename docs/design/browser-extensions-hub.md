@@ -1057,3 +1057,13 @@ type TranslateSettings = {
 Quick Translate adds an optional all-sites mode. The mode uses `http://*/*` and `https://*/*` as optional permissions, requires explicit popup consent, and can be revoked. Per-origin disable entries still override all-site access.
 
 The popup UI is upgraded to a compact modern control surface with clear activation states, permission chips, and accessible status text. This is a UI standard for plugin-local configuration surfaces, not a shared framework UI dependency.
+
+## Iteration 6 设计结论：Editorial Interface System
+
+插件 UI 使用统一的“editorial print shop”视觉系统：
+
+- 字体：Bricolage Grotesque（display）、Newsreader（body）、Martian Mono（labels/data）。
+- 色彩：warm paper、heavy ink、signal orange、cobalt、moss。
+- 深度：硬偏移阴影、registration marks、网格纹理。
+- 动效：一次编排式 staggered load，按钮和 chip 有触觉反馈。
+- 所有普通扩展页面继承 `@hub/shared/ui/styles.css` tokens。

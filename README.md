@@ -13,6 +13,7 @@ A privacy-first browser-extension monorepo built with **pnpm workspaces**, **WXT
 - **Independent plugins** — no cross-plugin dependencies; shared code stays in `@hub/shared`.
 - **Artifact-first validation** — manifest checks inspect generated WXT output, not source claims.
 - **Typed contracts** — messages, settings, and release tags are checked.
+- **Editorial UI system** — bundled Bricolage/Newsreader/Martian typography, warm paper surfaces, hard ink shadows, and orchestrated motion.
 - **Store-ready workflow** — manifest validation, Firefox lint, dependency audit, QA checklists, release artifacts, and checksums.
 
 ## Plugin catalog

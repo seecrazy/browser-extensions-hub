@@ -1,4 +1,6 @@
 import { getActiveTab, injectRuntimeContentScript } from "@hub/shared/injection";
+import "@hub/shared/ui/styles.css";
+import "./style.css";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import { createStatusView } from "@hub/shared/ui";
 import {

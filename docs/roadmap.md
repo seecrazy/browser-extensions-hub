@@ -83,3 +83,10 @@
 
 - [x] Quick Translate optional all-sites access
 - [x] Quick Translate UI refresh
+
+## Iteration 6
+
+- [x] Editorial UI design system
+- [x] Shared surface refresh
+- [x] Quick Translate popup alignment
+- [x] New Tab Dashboard alignment
