@@ -1,4 +1,5 @@
 import { getActiveTab, injectRuntimeContentScript } from "@hub/shared/injection";
+import { createTabMessageSender } from "@hub/shared/messaging";
 import "@hub/shared/ui/styles.css";
 import "./style.css";
 import { createNamespacedStorage } from "@hub/shared/storage";
@@ -14,6 +15,7 @@ import {
   normalizeOrigin,
   reconcileRevokedSiteAccess,
 } from "../../lib/site-access";
+import { quickTranslateMessages } from "../../lib/messages";
 import { translateDefaults } from "../../lib/types";
 import type { TranslateSettings } from "../../lib/types";
 
@@ -28,6 +30,7 @@ const disableSiteButton = document.querySelector<HTMLButtonElement>("#disable-si
 const enableAllButton = document.querySelector<HTMLButtonElement>("#enable-all");
 const disableAllButton = document.querySelector<HTMLButtonElement>("#disable-all");
 const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
+const sendTabMessage = createTabMessageSender(quickTranslateMessages);
 
 let currentOrigin: string | null = null;
 
@@ -120,8 +123,11 @@ languageSelect?.addEventListener("change", async () => {
 
 activateButton?.addEventListener("click", async () => {
   try {
-    await injectRuntimeContentScript({
+    const result = await injectRuntimeContentScript({
       file: "/content-scripts/quick-translate.js",
+    });
+    await sendTabMessage(result.tabId, {
+      type: "QUICK_TRANSLATE_ENABLE_TEMPORARY",
     });
     statusView.set("Enabled for this tab. Select text to translate.");
   } catch (error) {

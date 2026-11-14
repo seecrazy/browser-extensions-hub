@@ -38,6 +38,7 @@
 - [x] CI hardening, coverage, CodeQL, and release smoke checks.
 - [x] Playwright E2E skeleton.
 - [x] Quick Translate optional per-site access.
+- [x] Quick Translate temporary tab access fix.
 
 ## In progress
 

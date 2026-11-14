@@ -22,6 +22,7 @@ import {
   getSiteAccessState,
   getSiteAccessUi,
   isSiteEnabled,
+  isTranslationAllowed,
   normalizeOrigin,
   originToMatchPattern,
   reconcileRevokedSiteAccess,
@@ -112,6 +113,16 @@ describe("quick translate site access", () => {
       disabledOnThisOrigin: false,
       supported: true,
     });
+  });
+
+  it("allows explicit one-tab translation while respecting site exceptions", () => {
+    expect(isTranslationAllowed(translateDefaults, "https://example.com", true)).toBe(true);
+    expect(isTranslationAllowed(translateDefaults, "https://example.com", false)).toBe(false);
+
+    const disabledOrigin = setOriginDisabled(translateDefaults, "https://example.com", true);
+
+    expect(isTranslationAllowed(disabledOrigin, "https://example.com", true)).toBe(false);
+    expect(isTranslationAllowed(disabledOrigin, "https://example.com", false)).toBe(false);
   });
 
   it("exposes correct access controls for per-site mode", () => {

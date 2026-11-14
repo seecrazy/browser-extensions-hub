@@ -3,7 +3,7 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   outDir: "dist",
   manifestVersion: 3,
-  manifest: {
+  manifest: ({ browser }) => ({
     name: "Privacy Cleaner Lite",
     short_name: "Privacy Cleaner",
     description:
@@ -15,14 +15,19 @@ export default defineConfig({
       "48": "/icon/48.png",
       "128": "/icon/128.png",
     },
-    browser_specific_settings: {
-      gecko: {
-        id: "privacy-cleaner@browser-extensions-hub.local",
-        strict_min_version: "142.0",
-        data_collection_permissions: {
-          required: ["none"],
-        },
-      },
-    },
-  },
+
+    ...(browser === "firefox"
+      ? {
+          browser_specific_settings: {
+            gecko: {
+              id: "privacy-cleaner@browser-extensions-hub.local",
+              strict_min_version: "142.0",
+              data_collection_permissions: {
+                required: ["none"],
+              },
+            },
+          },
+        }
+      : {}),
+  }),
 });

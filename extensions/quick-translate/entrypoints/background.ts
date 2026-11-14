@@ -34,6 +34,11 @@ export default defineBackground(() => {
   });
 
   onContractMessage(quickTranslateMessages, {
+    QUICK_TRANSLATE_ENABLE_TEMPORARY: () => {
+      return {
+        active: true,
+      };
+    },
     QUICK_TRANSLATE_TRANSLATE: async (payload) => {
       const settings = await settingsStorage.get();
       return translateText({

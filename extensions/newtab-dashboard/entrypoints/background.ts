@@ -1,4 +1,8 @@
+import { browser } from "wxt/browser";
+
 export default defineBackground(() => {
-  // The New Tab Dashboard has no persistent background work. This worker exists
-  // so automation can resolve the extension origin without hardcoding an ID.
+  // The dashboard has no persistent background work. These listeners keep the
+  // MV3 service worker discoverable by automation without adding permissions.
+  browser.runtime.onInstalled.addListener(() => undefined);
+  browser.runtime.onStartup.addListener(() => undefined);
 });

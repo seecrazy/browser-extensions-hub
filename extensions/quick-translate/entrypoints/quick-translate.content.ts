@@ -1,7 +1,7 @@
-import { createMessageSender } from "@hub/shared/messaging";
+import { createMessageSender, onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import { quickTranslateMessages } from "../lib/messages";
-import { isOriginActive } from "../lib/site-access";
+import { isTranslationAllowed } from "../lib/site-access";
 import { isRtlLanguage, translateDefaults, validateTranslateSettings } from "../lib/types";
 
 const settingsStorage = createNamespacedStorage(
@@ -19,6 +19,7 @@ const hostId = "__hub-quick-translate-host__";
 let shadowRoot: ShadowRoot | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let currentSelectionText = "";
+let temporaryOriginActive = false;
 
 function getShadowRoot(): ShadowRoot {
   let host = document.getElementById(hostId) as HTMLDivElement | null;
@@ -204,7 +205,9 @@ async function translateSelection(selection: Selection): Promise<void> {
 
   const settings = await settingsStorage.get();
 
-  if (!isOriginActive(settings, document.location.origin)) {
+  const origin = document.location.origin;
+
+  if (!isTranslationAllowed(settings, origin, temporaryOriginActive)) {
     hideBubble();
     return;
   }
@@ -292,6 +295,21 @@ async function initialize(): Promise<void> {
     if (event.key === "Escape") {
       hideBubble();
     }
+  });
+  listenForTemporaryActivation();
+}
+
+function listenForTemporaryActivation(): void {
+  onContractMessage(quickTranslateMessages, {
+    QUICK_TRANSLATE_ENABLE_TEMPORARY: () => {
+      temporaryOriginActive = true;
+      return {
+        active: true,
+      };
+    },
+    QUICK_TRANSLATE_TRANSLATE: async () => {
+      throw new Error("Translations are handled by the background worker.");
+    },
   });
 }
 

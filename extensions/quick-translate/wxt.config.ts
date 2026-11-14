@@ -3,7 +3,7 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   outDir: "dist",
   manifestVersion: 3,
-  manifest: {
+  manifest: ({ browser }) => ({
     name: "Quick Translate",
     short_name: "Quick Translate",
     description:
@@ -11,14 +11,19 @@ export default defineConfig({
     permissions: ["activeTab", "scripting", "storage"],
     host_permissions: ["https://translate.googleapis.com/*"],
     optional_host_permissions: ["http://*/*", "https://*/*"],
-    browser_specific_settings: {
-      gecko: {
-        id: "quick-translate@browser-extensions-hub.local",
-        strict_min_version: "142.0",
-        data_collection_permissions: {
-          required: ["none"],
-        },
-      },
-    },
-  },
+
+    ...(browser === "firefox"
+      ? {
+          browser_specific_settings: {
+            gecko: {
+              id: "quick-translate@browser-extensions-hub.local",
+              strict_min_version: "142.0",
+              data_collection_permissions: {
+                required: ["none"],
+              },
+            },
+          },
+        }
+      : {}),
+  }),
 });

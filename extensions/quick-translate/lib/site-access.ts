@@ -76,6 +76,24 @@ export function isOriginDisabled(settings: TranslateSettings, origin: string): b
   return normalized ? settings.disabledOrigins.includes(normalized) : false;
 }
 
+export function isTranslationAllowed(
+  settings: TranslateSettings,
+  origin: string,
+  temporaryActive = false,
+): boolean {
+  const normalized = normalizeOrigin(origin);
+
+  if (!normalized) {
+    return false;
+  }
+
+  if (settings.disabledOrigins.includes(normalized)) {
+    return false;
+  }
+
+  return temporaryActive || isOriginActive(settings, normalized);
+}
+
 export function isOriginActive(settings: TranslateSettings, origin: string): boolean {
   const normalized = normalizeOrigin(origin);
 

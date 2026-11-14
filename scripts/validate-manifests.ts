@@ -51,6 +51,9 @@ type Manifest = {
   browser_specific_settings?: {
     gecko?: {
       id?: string;
+      data_collection_permissions?: {
+        required?: string[];
+      };
     };
   };
 };
@@ -144,8 +147,20 @@ function validateManifest(browserTarget: BrowserTarget, plugin: string): void {
     errors.push("Chrome MV3 background, when present, must use service_worker");
   }
 
-  if (browserTarget === "firefox" && !manifest.browser_specific_settings?.gecko?.id) {
-    errors.push("Firefox manifest requires browser_specific_settings.gecko.id");
+  if (browserTarget === "chrome" && manifest.browser_specific_settings) {
+    errors.push("Chrome manifest must not contain Firefox-only browser_specific_settings");
+  }
+
+  if (browserTarget === "firefox") {
+    const gecko = manifest.browser_specific_settings?.gecko;
+
+    if (!gecko?.id) {
+      errors.push("Firefox manifest requires browser_specific_settings.gecko.id");
+    }
+
+    if (gecko?.data_collection_permissions?.required?.[0] !== "none") {
+      errors.push('Firefox gecko.data_collection_permissions.required must be ["none"]');
+    }
   }
 
   for (const permission of manifest.permissions ?? []) {

@@ -20,11 +20,11 @@ Translate user-selected text in an approved tab with a local bubble.
 
 ## Data and state
 
-`quick-translate.settings` stores provider, target language, timeout, and approved origins.
+`quick-translate.settings` stores provider, target language, timeout, approved origins, all-site mode, and disabled origins. Temporary tab activation remains in-memory in the content script.
 
 ## User flow
 
-1. **This tab**: popup uses activeTab to inject content script; selection changes trigger translation.
+1. **This tab**: popup uses activeTab to inject content script and sends `QUICK_TRANSLATE_ENABLE_TEMPORARY`; translation is allowed until navigation.
 2. **This site**: popup requests an optional host permission for the exact origin; background registers a persistent content script for that origin.
 3. Background calls Google Translate with an AbortController timeout and returns parsed text.
 
@@ -37,6 +37,7 @@ Primary APIs: `chrome.permissions`, `chrome.scripting.registerContentScripts`, r
 ## Boundaries and edge cases
 
 - No broad host permission is enabled by default.
+- Chrome manifests omit Firefox-only `browser_specific_settings`.
 - Selections in editable fields are ignored.
 - Text is limited to 1,000 characters.
 - Only Google Translate is supported in v0.1.

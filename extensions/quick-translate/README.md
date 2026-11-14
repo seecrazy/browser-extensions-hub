@@ -12,7 +12,7 @@ Translate user-selected text in an approved tab with a local bubble.
 
 ## How it works
 
-1. **This tab**: popup uses activeTab to inject content script; selection changes trigger translation.
+1. **This tab**: popup uses activeTab to inject content script, then tells that script the tab is temporarily active. It expires on navigation.
 2. **This site**: popup requests an optional host permission for the exact origin; background registers a persistent content script for that origin.
 3. **All sites**: popup requests optional access to http and https origins after an explicit click; background registers one all-site content script.
 4. Background calls Google Translate with an AbortController timeout and returns parsed text.
@@ -23,7 +23,7 @@ Translate user-selected text in an approved tab with a local bubble.
 
 ## Data model
 
-`quick-translate.settings` stores provider, target language, timeout, and approved origins.
+`quick-translate.settings` stores provider, target language, timeout, approved origins, all-site mode, and per-site exceptions. Temporary tab activation is in-memory only.
 
 ## Limitations
 

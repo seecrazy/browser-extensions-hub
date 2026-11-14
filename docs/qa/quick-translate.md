@@ -4,6 +4,7 @@ Run after `pnpm build` before tagging a release.
 
 - [ ] Open popup and choose target language.
 - [ ] Click Enable on this tab.
+- [ ] Confirm a second selection on the same page translates without reopening the popup.
 - [ ] Select short text and confirm translation bubble.
 - [ ] Click Copy and paste result.
 - [ ] Press Escape and confirm bubble closes.
