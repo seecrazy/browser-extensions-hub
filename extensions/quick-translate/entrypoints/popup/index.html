@@ -9,6 +9,7 @@
     <main class="hub-page">
       <h1 class="hub-title">Quick Translate</h1>
       <div class="hub-card">
+        <p id="origin" class="hub-label">Current site</p>
         <label class="hub-label" for="language">Translate selected text to</label>
         <select id="language" class="hub-select">
           <option value="en">English</option>
@@ -23,6 +24,10 @@
         <p id="status" class="hub-status"></p>
       </div>
       <button id="activate" class="hub-button">Enable on this tab</button>
+      <button id="enable-site" class="hub-button hub-button-secondary">Always on this site</button>
+      <button id="disable-site" class="hub-button hub-button-danger" hidden>
+        Disable on this site
+      </button>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

@@ -6,3 +6,4 @@
 - It does not sell or share data.
 
 - Selected text is sent to Google Translate for translation.
+- Optional per-site host permissions are granted only after an explicit user action.

@@ -40,6 +40,7 @@ describe("quick translate", () => {
       provider: "google",
       targetLanguage: "en",
       timeoutMs: 6000,
+      enabledOrigins: [],
     });
   });
 });

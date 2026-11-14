@@ -10,6 +10,7 @@ export default defineConfig({
       "Select text in an activated tab and get an instant translation. No broad host permissions.",
     permissions: ["activeTab", "scripting", "storage"],
     host_permissions: ["https://translate.googleapis.com/*"],
+    optional_host_permissions: ["http://*/*", "https://*/*"],
     browser_specific_settings: {
       gecko: {
         id: "quick-translate@browser-extensions-hub.local",

@@ -1014,3 +1014,40 @@ popup 不再重复实现注入逻辑。
 ## 9. 文档
 
 每个插件目录新增 `PLUGIN.md`，README 只保留项目级 overview。QA checklist 在 `docs/qa/<plugin>.md`。
+
+---
+
+# Iteration 5 设计结论：Quick Translate per-site access
+
+## 目标
+
+Quick Translate 支持“当前 tab 一次性启用”和“当前 site 持续启用”两种模式，不引入默认 broad host permission。
+
+## 用户流程
+
+1. 用户打开 popup。
+2. 点击 **Enable on this tab**：只使用 `activeTab`，当前 tab 注入，导航后失效。
+3. 点击 **Always on this site**：
+   - popup 请求当前 origin 的 optional host permission；
+   - 用户批准后写入 `enabledOrigins`；
+   - background 注册只匹配该 origin 的 content script；
+   - 后续导航自动注入。
+4. 点击 **Disable on this site**：移除 permission 和 registered content script，并更新 storage。
+
+## 数据模型
+
+```ts
+type TranslateSettings = {
+  schemaVersion: 1;
+  provider: "google";
+  targetLanguage: string;
+  timeoutMs: number;
+  enabledOrigins: string[];
+};
+```
+
+## 权限
+
+- 静态：`activeTab`, `scripting`, `storage`, `https://translate.googleapis.com/*`。
+- Optional：`http://*/*`, `https://*/*`。
+- 无默认 page access；只有用户逐 site 授权后才生效。

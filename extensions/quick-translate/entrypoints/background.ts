@@ -1,6 +1,14 @@
+import { browser } from "wxt/browser";
+
 import { onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import { quickTranslateMessages } from "../lib/messages";
+import {
+  setSiteEnabled,
+  isSitePermissionGranted,
+  registerSiteContentScript,
+  unregisterSiteContentScript,
+} from "../lib/site-access";
 import { translateText, truncateTranslationText } from "../lib/translate";
 import { translateDefaults, validateTranslateSettings } from "../lib/types";
 
@@ -13,7 +21,37 @@ const settingsStorage = createNamespacedStorage(
   },
 );
 
+async function syncSiteAccess(): Promise<void> {
+  const settings = await settingsStorage.get();
+  let nextSettings = settings;
+  let changed = false;
+
+  for (const origin of settings.enabledOrigins) {
+    const granted = await isSitePermissionGranted(origin);
+
+    if (!granted) {
+      await unregisterSiteContentScript(origin);
+      nextSettings = setSiteEnabled(nextSettings, origin, false);
+      changed = true;
+      continue;
+    }
+
+    await registerSiteContentScript(origin);
+  }
+
+  if (changed) {
+    await settingsStorage.patch(nextSettings);
+  }
+}
+
 export default defineBackground(() => {
+  browser.runtime.onInstalled.addListener(() => {
+    void syncSiteAccess();
+  });
+  browser.runtime.onStartup.addListener(() => {
+    void syncSiteAccess();
+  });
+
   onContractMessage(quickTranslateMessages, {
     QUICK_TRANSLATE_TRANSLATE: async (payload) => {
       const settings = await settingsStorage.get();

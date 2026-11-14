@@ -15,3 +15,7 @@ Run after `pnpm build` before tagging a release.
 - [ ] Firefox passed
 - [ ] No console errors
 - [ ] Permissions match the listing
+- [ ] Enable on this tab works and expires after navigation.
+- [ ] Always on this site requests one-origin permission.
+- [ ] Approved site auto-injects after reload.
+- [ ] Disable on this site removes the permission and registered script.

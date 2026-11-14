@@ -5,6 +5,7 @@ export type TranslateSettings = {
   provider: TranslateProviderId;
   targetLanguage: string;
   timeoutMs: number;
+  enabledOrigins: string[];
 };
 
 export type TranslationResult = {
@@ -17,6 +18,7 @@ export const translateDefaults: TranslateSettings = {
   provider: "google",
   targetLanguage: "en",
   timeoutMs: 6000,
+  enabledOrigins: [],
 };
 
 export const RTL_LANGUAGES = new Set(["ar", "he", "fa", "ur", "ps", "sd", "ug", "yi"]);
@@ -41,5 +43,12 @@ export function validateTranslateSettings(value: unknown): TranslateSettings {
       typeof record.timeoutMs === "number" && record.timeoutMs >= 1000 && record.timeoutMs <= 20_000
         ? record.timeoutMs
         : 6000,
+    enabledOrigins: Array.isArray(record.enabledOrigins)
+      ? [
+          ...new Set(
+            record.enabledOrigins.filter((origin): origin is string => typeof origin === "string"),
+          ),
+        ]
+      : [],
   };
 }
