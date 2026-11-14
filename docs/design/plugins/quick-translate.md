@@ -2,67 +2,51 @@
 
 ## Purpose
 
-Translate user-selected text in an approved tab with a local bubble.
+Translate user-selected text in an activated tab with a local bubble.
 
 ## Goals
 
 - No default page access.
-- Support one-tab and per-site activation.
+- One-tab activation only.
 - Use Shadow DOM for UI isolation.
-- Cache results and timeout requests.
-- Disclose and isolate the remote translation request.
+- Store only the target language.
+- Send selected text to Google Translate.
 
 ## Architecture
 
-- Browser surfaces live in `entrypoints/`.
-- Reusable logic lives in `lib/`.
-- Shared infrastructure comes from `@hub/shared`.
+- Popup handles target-language selection and activation.
+- Content script listens for text selection and shows a Shadow DOM bubble.
+- Background calls Google Translate.
 
 ## Data and state
 
-`quick-translate.settings` stores provider, target language, timeout, approved origins, all-site mode, and disabled origins. Temporary tab activation remains in-memory in the content script.
+`quick-translate.settings` stores only the target language. Temporary activation is controlled by the popup and expires on navigation.
 
 ## User flow
 
-1. **This tab**: popup uses activeTab to inject content script and sends `QUICK_TRANSLATE_ENABLE_TEMPORARY`; translation is allowed until navigation.
-2. **This site**: popup requests an optional host permission for the exact origin; background registers a persistent content script for that origin.
-3. Background calls Google Translate with an AbortController timeout and returns parsed text.
+1. Open popup and choose target language.
+2. Click **Enable on this tab**.
+3. Select text on the page.
+4. The content script shows a translation bubble.
 
 ## Permissions and APIs
 
-`activeTab`, `scripting`, `storage`, `https://translate.googleapis.com/*`; optional `http://*/*` and `https://*/*` are requested per site and never granted by default.
+`activeTab`, `scripting`, `storage`, `https://translate.googleapis.com/*`.
 
-Primary APIs: `chrome.permissions`, `chrome.scripting.registerContentScripts`, runtime messages, `fetch` with AbortController.
+Primary APIs: `chrome.scripting.executeScript`, runtime messages, `fetch`.
 
 ## Boundaries and edge cases
 
 - No broad host permission is enabled by default.
-- Chrome manifests omit Firefox-only `browser_specific_settings`.
 - Selections in editable fields are ignored.
 - Text is limited to 1,000 characters.
-- Only Google Translate is supported in v0.1.
-- The bubble uses textContent, never innerHTML.
+- Activation expires on navigation.
+- The bubble uses `textContent`, never `innerHTML`.
 
 ## Verification
 
-Translation parsing, settings validation, origin/match-pattern normalization, and per-site state are unit tested.
+Manual QA: [`docs/qa/quick-translate.md`](../../docs/qa/quick-translate.md).
 
 See also:
 
-- [`extensions/quick-translate/README.md`](../../extensions/quick-translate/README.md)
 - [`extensions/quick-translate/PLUGIN.md`](../../extensions/quick-translate/PLUGIN.md)
-- [`docs/qa/quick-translate.md`](../../docs/qa/quick-translate.md)
-
-## Iteration 5 supplement
-
-Quick Translate supports three access modes:
-
-1. **This tab only**: `activeTab` runtime injection.
-2. **This site**: optional host permission for the exact origin.
-3. **All sites**: explicit optional access to `http://*/*` and `https://*/*`.
-
-All-site access can be revoked globally. A per-origin disable list overrides all-site mode. The popup is the consent surface; content scripts do not request permissions.
-
-## Iteration 7 refinement
-
-The popup shows only the current site and a single base toggle. Advanced settings contain language, timeout, temporary tab activation, and all-site controls. In all-site mode, the base toggle toggles a per-site exception instead of revoking global access.

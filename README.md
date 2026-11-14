@@ -24,7 +24,7 @@ A privacy-first browser-extension monorepo built with **pnpm workspaces**, **WXT
 | [Dark Mode Lite](extensions/dark-mode-lite/PLUGIN.md)             | Per-site dark mode and strength                          | popup, runtime content script             | `activeTab`, `scripting`, `storage`                        |
 | [Tab Stash](extensions/tab-stash/PLUGIN.md)                       | Named tab groups, search, restore, JSON backup           | popup, background, options                | `tabs`, `storage`                                          |
 | [Volume Booster](extensions/volume-booster/PLUGIN.md)             | Up to 300% Web Audio gain, dynamic media                 | popup, runtime content script             | `activeTab`, `scripting`, `storage`                        |
-| [Quick Translate](extensions/quick-translate/PLUGIN.md)           | Selection bubble, cache, timeout, copy, RTL              | popup, background, runtime content script | `activeTab`, `scripting`, `storage`, Google Translate host |
+| [Quick Translate](extensions/quick-translate/PLUGIN.md)           | Selection bubble with one-tab activation                 | popup, background, runtime content script | `activeTab`, `scripting`, `storage`, Google Translate host |
 | [Focus Lock](extensions/focus-lock/PLUGIN.md)                     | Local DNR blocklist and per-domain unlock                | background, options, blocked page         | `declarativeNetRequest`, `storage`, `alarms`               |
 | [New Tab Dashboard](extensions/newtab-dashboard/PLUGIN.md)        | Local time, todos, shortcuts; no search override         | newtab, background                        | `storage`                                                  |
 | [Privacy Cleaner](extensions/privacy-cleaner/PLUGIN.md)           | Manual per-origin storage cleanup                        | popup, background, options                | `activeTab`, `browsingData`, `storage`                     |
@@ -231,7 +231,7 @@ See [`docs/operations/release-checklist.md`](docs/operations/release-checklist.m
 - Clipboard History does not request `clipboardRead`; it records only explicit `copy` events.
 - Screenshot Annotator clears session screenshot data after loading it.
 - Quick Translate sends selected text to Google Translate for translation; this is disclosed in its listing and privacy docs.
-- Quick Translate never grants page access by default; tab, site, and all-site access are explicit user choices.
+- Quick Translate has no page access by default; one-tab activation is explicit and expires on navigation.
 
 ## Documentation
 

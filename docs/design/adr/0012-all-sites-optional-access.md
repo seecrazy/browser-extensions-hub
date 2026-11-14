@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR 0013](./0013-revert-quick-translate.md)
 
 ## Context
 

@@ -30,6 +30,7 @@ type Manifest = {
   description?: string;
   permissions?: string[];
   host_permissions?: string[];
+  optional_host_permissions?: string[];
   content_scripts?: Array<{
     matches?: string[];
     js?: string[];
@@ -172,6 +173,12 @@ function validateManifest(browserTarget: BrowserTarget, plugin: string): void {
   for (const hostPermission of manifest.host_permissions ?? []) {
     if (broadHostPatterns.has(hostPermission)) {
       errors.push(`host_permissions must not contain broad pattern "${hostPermission}"`);
+    }
+  }
+
+  for (const hostPermission of manifest.optional_host_permissions ?? []) {
+    if (broadHostPatterns.has(hostPermission)) {
+      errors.push(`optional_host_permissions must not contain broad pattern "${hostPermission}"`);
     }
   }
 

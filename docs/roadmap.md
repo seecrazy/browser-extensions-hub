@@ -37,8 +37,8 @@
 - [x] Per-plugin docs.
 - [x] CI hardening, coverage, CodeQL, and release smoke checks.
 - [x] Playwright E2E skeleton.
-- [x] Quick Translate optional per-site access.
-- [x] Quick Translate temporary tab access fix.
+- [x] Quick Translate optional per-site access. (Later reverted.)
+- [x] Quick Translate temporary tab access fix. (Later reverted.)
 
 ## In progress
 
@@ -82,20 +82,24 @@
 
 ## Iteration 5 supplement
 
-- [x] Quick Translate optional all-sites access
-- [x] Quick Translate UI refresh
+- [x] Quick Translate optional all-sites access. (Later reverted.)
+- [x] Quick Translate UI refresh. (Later reverted.)
 
 ## Iteration 6
 
 - [x] Editorial UI design system
 - [x] Shared surface refresh
-- [x] Quick Translate popup alignment
+- [x] Quick Translate popup alignment. (Later reverted.)
 - [x] New Tab Dashboard alignment
 
 ## Iteration 7
 
 - [x] Shared advanced settings disclosure
-- [x] Quick Translate advanced timeout
+- [x] Quick Translate advanced timeout. (Later reverted for Quick Translate.)
 - [x] Reading Progress advanced appearance
 - [x] Clipboard advanced retention
-- [x] Quick Translate base-first popup
+- [x] Quick Translate base-first popup. (Later reverted.)
+
+## Revert
+
+- [x] Revert Quick Translate to first-version tab-only scope.

@@ -10,7 +10,7 @@ Select text and get a quick translation.
 
 ## Detailed description
 
-Quick Translate activates only for the tab you choose. Select text and a lightweight bubble shows the translation. It supports copy, timeout, caching, and right-to-left languages. Selected text is sent to Google Translate to produce the translation.
+Quick Translate lets you enable translation for the current tab. Select text and a lightweight bubble shows the translation. It does not change your search settings, show ads, or collect analytics. Selected text is sent to Google Translate to produce the translation.
 
 ## Permission justification
 

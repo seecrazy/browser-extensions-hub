@@ -1,275 +1,68 @@
-import { getActiveTab, injectRuntimeContentScript } from "@hub/shared/injection";
-import { createTabMessageSender } from "@hub/shared/messaging";
-import "@hub/shared/ui/styles.css";
-import "./style.css";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { createStatusView } from "@hub/shared/ui";
-import {
-  disableAllSitesAccess,
-  disableSiteAccess,
-  registerAllSitesContentScript,
-  registerSiteContentScript,
-  requestAllSitesPermission,
-  requestSitePermission,
-  getSiteAccessUi,
-  isAllSitesPermissionGranted,
-  isSitePermissionGranted,
-  normalizeOrigin,
-  reconcileRevokedSiteAccess,
-  setOriginDisabled,
-  setSiteEnabled,
-} from "../../lib/site-access";
-import { quickTranslateMessages } from "../../lib/messages";
-import { translateDefaults } from "../../lib/types";
-import type { TranslateSettings } from "../../lib/types";
+import "@hub/shared/ui/styles.css";
+import { browser } from "wxt/browser";
 
-const settingsStorage = createNamespacedStorage("quick-translate.settings", translateDefaults);
+type TranslateSettings = {
+  schemaVersion: number;
+  targetLanguage: string;
+};
+
+const settingsStorage = createNamespacedStorage<TranslateSettings>("quick-translate.settings", {
+  schemaVersion: 1,
+  targetLanguage: "en",
+});
 const languageSelect = document.querySelector<HTMLSelectElement>("#language");
-const timeoutSelect = document.querySelector<HTMLSelectElement>("#timeout");
-const originLabel = document.querySelector<HTMLElement>("#origin");
-const siteStateChip = document.querySelector<HTMLSpanElement>("#site-state");
-const siteToggleButton = document.querySelector<HTMLButtonElement>("#site-toggle");
-const siteToggleLabel = document.querySelector<HTMLElement>("#site-toggle-label");
-const siteToggleNote = document.querySelector<HTMLElement>("#site-toggle-note");
-const activateButton = document.querySelector<HTMLButtonElement>("#activate");
-const enableAllButton = document.querySelector<HTMLButtonElement>("#enable-all");
-const disableAllButton = document.querySelector<HTMLButtonElement>("#disable-all");
-const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
-const sendTabMessage = createTabMessageSender(quickTranslateMessages);
+const status = document.querySelector<HTMLParagraphElement>("#status");
 
-let currentOrigin: string | null = null;
-
-function setChip(element: HTMLElement | null, text: string, tone?: string, hidden = false): void {
-  if (!element) {
+function setStatus(message: string, isError = false): void {
+  if (!status) {
     return;
   }
 
-  element.textContent = text;
-  element.hidden = hidden;
-
-  if (tone) {
-    element.dataset.tone = tone;
-  } else {
-    delete element.dataset.tone;
-  }
+  status.textContent = message;
+  status.classList.toggle("hub-status-error", isError);
 }
 
-function setButton(element: HTMLButtonElement | null, hidden: boolean): void {
-  if (element) {
-    element.hidden = hidden;
-  }
-}
-
-function renderSiteState(settings: TranslateSettings): void {
-  const ui = getSiteAccessUi(settings, currentOrigin ?? undefined);
-
-  if (originLabel) {
-    originLabel.textContent = ui.origin || "Unsupported page";
-  }
-
-  if (!ui.supported) {
-    setChip(siteStateChip, "Unsupported page", "muted");
-    setButton(siteToggleButton, true);
-    return;
-  }
-
-  if (ui.disabledOnThisOrigin) {
-    setChip(siteStateChip, "Disabled on this site", "muted");
-  } else if (ui.allSites) {
-    setChip(siteStateChip, "Enabled via all sites", "active");
-  } else if (ui.siteEnabled) {
-    setChip(siteStateChip, "Enabled for this site", "active");
-  } else {
-    setChip(siteStateChip, "Not enabled", "muted");
-  }
-
-  setButton(siteToggleButton, false);
-
-  if (siteToggleLabel) {
-    siteToggleLabel.textContent = ui.showDisableSite
-      ? "Disable on this site"
-      : "Enable on this site";
-  }
-
-  if (siteToggleNote) {
-    siteToggleNote.textContent = ui.showDisableSite
-      ? ui.allSites
-        ? "exception"
-        : "revoke permission"
-      : ui.allSites && ui.disabledOnThisOrigin
-        ? "remove exception"
-        : "asks once";
-  }
-
-  setButton(enableAllButton, !ui.showEnableAll);
-  setButton(disableAllButton, !ui.showDisableAll);
-}
-
-async function injectCurrentTab(): Promise<void> {
-  const tab = await getActiveTab();
-
-  if (tab.tabId === undefined) {
-    throw new Error("No active tab available.");
-  }
-
-  await injectRuntimeContentScript({
-    file: "/content-scripts/quick-translate.js",
-  });
-}
-
-async function loadState(): Promise<void> {
-  const tab = await getActiveTab();
-  currentOrigin = normalizeOrigin(tab.url);
+async function loadSettings(): Promise<void> {
   const settings = await settingsStorage.get();
 
   if (languageSelect) {
     languageSelect.value = settings.targetLanguage;
   }
-
-  if (timeoutSelect) {
-    timeoutSelect.value = String(settings.timeoutMs);
-  }
-
-  if (currentOrigin) {
-    const [siteGranted, allGranted] = await Promise.all([
-      isSitePermissionGranted(currentOrigin),
-      isAllSitesPermissionGranted(),
-    ]);
-
-    const reconciledSettings = reconcileRevokedSiteAccess(settings, {
-      origin: currentOrigin,
-      siteGranted,
-      allGranted,
-    });
-
-    if (reconciledSettings !== settings) {
-      await settingsStorage.patch(reconciledSettings);
-    }
-
-    renderSiteState(reconciledSettings);
-    return;
-  }
-
-  renderSiteState(settings);
 }
 
 languageSelect?.addEventListener("change", async () => {
   await settingsStorage.patch({
     targetLanguage: languageSelect.value,
   });
-  statusView.set("Saved.");
+  setStatus("Saved.");
 });
 
-timeoutSelect?.addEventListener("change", async () => {
-  await settingsStorage.patch({
-    timeoutMs: Number(timeoutSelect.value),
+document.querySelector<HTMLButtonElement>("#activate")?.addEventListener("click", async () => {
+  const [tab] = await browser.tabs.query({
+    active: true,
+    currentWindow: true,
   });
-  statusView.set("Saved request timeout.");
-});
 
-activateButton?.addEventListener("click", async () => {
+  if (!tab?.id) {
+    setStatus("No active tab available.", true);
+    return;
+  }
+
   try {
-    const result = await injectRuntimeContentScript({
-      file: "/content-scripts/quick-translate.js",
+    await browser.scripting.executeScript({
+      target: {
+        tabId: tab.id,
+      },
+      files: ["/content-scripts/quick-translate.js"],
     });
-    await sendTabMessage(result.tabId, {
-      type: "QUICK_TRANSLATE_ENABLE_TEMPORARY",
-    });
-    statusView.set("Enabled for this tab. Select text to translate.");
+    setStatus("Activated. Select text to translate.");
   } catch (error) {
-    statusView.set(
+    setStatus(
       error instanceof Error ? error.message : "This tab cannot use Quick Translate.",
       true,
     );
   }
 });
 
-siteToggleButton?.addEventListener("click", async () => {
-  if (!currentOrigin) {
-    statusView.set("Only http and https sites can be enabled.", true);
-    return;
-  }
-
-  siteToggleButton.disabled = true;
-
-  try {
-    const settings = await settingsStorage.get();
-    const ui = getSiteAccessUi(settings, currentOrigin);
-    let nextSettings: TranslateSettings;
-
-    if (ui.showDisableSite) {
-      nextSettings =
-        ui.allSites && !ui.disabledOnThisOrigin
-          ? setOriginDisabled(settings, currentOrigin, true)
-          : await disableSiteAccess(settings, currentOrigin);
-    } else if (ui.allSites && ui.disabledOnThisOrigin) {
-      nextSettings = setOriginDisabled(settings, currentOrigin, false);
-    } else {
-      const granted = await requestSitePermission(currentOrigin);
-
-      if (!granted) {
-        statusView.set("Site permission was not granted.", true);
-        return;
-      }
-
-      await registerSiteContentScript(currentOrigin);
-      nextSettings = setSiteEnabled(settings, currentOrigin, true);
-    }
-
-    await settingsStorage.patch(nextSettings);
-
-    if (ui.showEnableSite || (ui.allSites && !ui.disabledOnThisOrigin)) {
-      await injectCurrentTab();
-    }
-
-    renderSiteState(nextSettings);
-    statusView.set("Site access updated.");
-  } catch (error) {
-    statusView.set(error instanceof Error ? error.message : "Unable to update site access.", true);
-  } finally {
-    if (siteToggleButton) {
-      siteToggleButton.disabled = false;
-    }
-  }
-});
-
-enableAllButton?.addEventListener("click", async () => {
-  try {
-    const granted = await requestAllSitesPermission();
-
-    if (!granted) {
-      statusView.set("All-site permission was not granted.", true);
-      return;
-    }
-
-    await registerAllSitesContentScript();
-    const settings = await settingsStorage.get();
-    const nextSettings: TranslateSettings = {
-      ...settings,
-      enabledAllSites: true,
-    };
-    await settingsStorage.patch(nextSettings);
-    await injectCurrentTab();
-    renderSiteState(nextSettings);
-    statusView.set("Enabled on all sites.");
-  } catch (error) {
-    statusView.set(
-      error instanceof Error ? error.message : "Unable to update all-site access.",
-      true,
-    );
-  }
-});
-
-disableAllButton?.addEventListener("click", async () => {
-  try {
-    const settings = await settingsStorage.get();
-    const nextSettings = await disableAllSitesAccess(settings);
-    await settingsStorage.patch(nextSettings);
-    renderSiteState(nextSettings);
-    statusView.set("All-site access revoked.");
-  } catch (error) {
-    statusView.set(error instanceof Error ? error.message : "Unable to revoke access.", true);
-  }
-});
-
-void loadState();
+void loadSettings();

@@ -2,8 +2,9 @@
 
 ## Scope
 
-- Selection bubble translation
-- Timeout, cache, copy, RTL
+- Select text after activating the current tab.
+- Show a lightweight translation bubble.
+- Store only the target language locally.
 
 ## Permissions
 
@@ -13,10 +14,6 @@ activeTab, scripting, storage; https://translate.googleapis.com/*
 
 See [`docs/listings/quick-translate/permissions.md`](../../docs/listings/quick-translate/permissions.md).
 
-## Message contract
-
-Messages are declared in `lib/messages.ts` where applicable. Entry points must not invent string message shapes.
-
 ## Manual verification
 
 See [`docs/qa/quick-translate.md`](../../docs/qa/quick-translate.md).
@@ -24,5 +21,5 @@ See [`docs/qa/quick-translate.md`](../../docs/qa/quick-translate.md).
 ## Known constraints
 
 - Manifest V3 only.
+- One-tab activation expires on navigation.
 - No analytics, accounts, or telemetry.
-- Runtime page features use activeTab/runtime injection where possible.

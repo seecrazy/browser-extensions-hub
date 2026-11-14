@@ -4,13 +4,10 @@ Run after `pnpm build` before tagging a release.
 
 - [ ] Open popup and choose target language.
 - [ ] Click Enable on this tab.
-- [ ] Confirm a second selection on the same page translates without reopening the popup.
-- [ ] Select text before activation; activation should translate it immediately.
-- [ ] Confirm Advanced settings is visibly highlighted and collapsed by default.
 - [ ] Select short text and confirm translation bubble.
-- [ ] Click Copy and paste result.
+- [ ] Reload or navigate and confirm activation expires.
 - [ ] Press Escape and confirm bubble closes.
-- [ ] Confirm no request occurs on pages where feature was not enabled.
+- [ ] Confirm no request occurs before Enable on this tab.
 
 ## Result
 
@@ -18,12 +15,3 @@ Run after `pnpm build` before tagging a release.
 - [ ] Firefox passed
 - [ ] No console errors
 - [ ] Permissions match the listing
-- [ ] Enable on this tab works and expires after navigation.
-- [ ] Always on this site requests one-origin permission.
-- [ ] Approved site auto-injects after reload.
-- [ ] Approving site access also injects the currently open page.
-- [ ] Advanced settings button is visibly highlighted.
-- [ ] Disable on this site removes the permission and registered script.
-- [ ] Enable all sites asks for optional http/https permission once.
-- [ ] All-site mode injects on multiple sites without another prompt.
-- [ ] Disabling all sites removes the registered script.
