@@ -78,3 +78,8 @@
 - [x] CI hardening/coverage/CodeQL
 - [x] Release smoke checks
 - [x] Playwright E2E skeleton
+
+## Iteration 5 supplement
+
+- [x] Quick Translate optional all-sites access
+- [x] Quick Translate UI refresh

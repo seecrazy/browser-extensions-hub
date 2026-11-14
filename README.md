@@ -230,6 +230,7 @@ See [`docs/operations/release-checklist.md`](docs/operations/release-checklist.m
 - Clipboard History does not request `clipboardRead`; it records only explicit `copy` events.
 - Screenshot Annotator clears session screenshot data after loading it.
 - Quick Translate sends selected text to Google Translate for translation; this is disclosed in its listing and privacy docs.
+- Quick Translate never grants page access by default; tab, site, and all-site access are explicit user choices.
 
 ## Documentation
 

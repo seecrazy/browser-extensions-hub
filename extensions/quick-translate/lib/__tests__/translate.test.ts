@@ -41,6 +41,8 @@ describe("quick translate", () => {
       targetLanguage: "en",
       timeoutMs: 6000,
       enabledOrigins: [],
+      enabledAllSites: false,
+      disabledOrigins: [],
     });
   });
 });

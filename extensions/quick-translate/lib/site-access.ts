@@ -2,10 +2,15 @@ import { browser } from "wxt/browser";
 
 import type { TranslateSettings } from "./types";
 
+export const ALL_SITE_PATTERNS = ["http://*/*", "https://*/*"];
+export const ALL_SITE_SCRIPT_ID = "quick-translate-all-sites";
+
 export type SiteAccessState = {
   origin: string;
   pattern?: string;
   enabled: boolean;
+  allSites: boolean;
+  disabledOnThisOrigin: boolean;
   supported: boolean;
 };
 
@@ -50,6 +55,50 @@ export function createSiteScriptId(origin: string): string {
   return `quick-translate-${(hash >>> 0).toString(36)}`;
 }
 
+export function isAllSitesEnabled(settings: TranslateSettings): boolean {
+  return settings.enabledAllSites;
+}
+
+export function isOriginDisabled(settings: TranslateSettings, origin: string): boolean {
+  const normalized = normalizeOrigin(origin);
+  return normalized ? settings.disabledOrigins.includes(normalized) : false;
+}
+
+export function isOriginActive(settings: TranslateSettings, origin: string): boolean {
+  const normalized = normalizeOrigin(origin);
+
+  if (!normalized) {
+    return false;
+  }
+
+  if (settings.disabledOrigins.includes(normalized)) {
+    return false;
+  }
+
+  return settings.enabledAllSites || settings.enabledOrigins.includes(normalized);
+}
+
+export function setOriginDisabled(
+  settings: TranslateSettings,
+  origin: string,
+  disabled: boolean,
+): TranslateSettings {
+  const normalized = normalizeOrigin(origin);
+
+  if (!normalized) {
+    return settings;
+  }
+
+  const disabledOrigins = disabled
+    ? [...new Set([...settings.disabledOrigins, normalized])]
+    : settings.disabledOrigins.filter((candidate) => candidate !== normalized);
+
+  return {
+    ...settings,
+    disabledOrigins,
+  };
+}
+
 export function isSiteEnabled(settings: TranslateSettings, origin: string): boolean {
   const normalized = normalizeOrigin(origin);
   return normalized ? settings.enabledOrigins.includes(normalized) : false;
@@ -87,6 +136,8 @@ export function getSiteAccessState(
     origin: normalized ?? "",
     ...(pattern ? { pattern } : {}),
     enabled: normalized ? isSiteEnabled(settings, normalized) : false,
+    allSites: settings.enabledAllSites,
+    disabledOnThisOrigin: normalized ? isOriginDisabled(settings, normalized) : false,
     supported: Boolean(normalized),
   };
 }
@@ -103,6 +154,18 @@ export async function isSitePermissionGranted(origin: string): Promise<boolean> 
   });
 }
 
+export async function isAllSitesPermissionGranted(): Promise<boolean> {
+  return browser.permissions.contains({
+    origins: ALL_SITE_PATTERNS,
+  });
+}
+
+export async function requestAllSitesPermission(): Promise<boolean> {
+  return browser.permissions.request({
+    origins: ALL_SITE_PATTERNS,
+  });
+}
+
 export async function requestSitePermission(origin: string): Promise<boolean> {
   const pattern = originToMatchPattern(origin);
 
@@ -113,6 +176,61 @@ export async function requestSitePermission(origin: string): Promise<boolean> {
   return browser.permissions.request({
     origins: [pattern],
   });
+}
+
+export async function registerAllSitesContentScript(): Promise<void> {
+  const registered = await browser.scripting.getRegisteredContentScripts();
+  const alreadyRegistered = registered.some((script) => script.id === ALL_SITE_SCRIPT_ID);
+
+  if (alreadyRegistered) {
+    return;
+  }
+
+  await browser.scripting.registerContentScripts([
+    {
+      id: ALL_SITE_SCRIPT_ID,
+      matches: ALL_SITE_PATTERNS,
+      js: ["/content-scripts/quick-translate.js"],
+      runAt: "document_idle",
+      persistAcrossSessions: true,
+    },
+  ]);
+}
+
+export async function unregisterAllSitesContentScript(): Promise<void> {
+  await browser.scripting.unregisterContentScripts({
+    ids: [ALL_SITE_SCRIPT_ID],
+  });
+}
+
+export async function enableAllSitesAccess(
+  settings: TranslateSettings,
+): Promise<TranslateSettings> {
+  const granted = await requestAllSitesPermission();
+
+  if (!granted) {
+    throw new Error("All-site permission was not granted.");
+  }
+
+  await registerAllSitesContentScript();
+  return {
+    ...settings,
+    enabledAllSites: true,
+  };
+}
+
+export async function disableAllSitesAccess(
+  settings: TranslateSettings,
+): Promise<TranslateSettings> {
+  await unregisterAllSitesContentScript();
+  await browser.permissions.remove({
+    origins: ALL_SITE_PATTERNS,
+  });
+
+  return {
+    ...settings,
+    enabledAllSites: false,
+  };
 }
 
 export async function registerSiteContentScript(origin: string): Promise<void> {
@@ -221,5 +339,16 @@ export async function syncRegisteredSiteScripts(settings: TranslateSettings): Pr
     }
 
     await registerSiteContentScript(origin);
+  }
+
+  if (settings.enabledAllSites) {
+    const granted = await isAllSitesPermissionGranted();
+
+    if (!granted) {
+      await unregisterAllSitesContentScript();
+      return;
+    }
+
+    await registerAllSitesContentScript();
   }
 }

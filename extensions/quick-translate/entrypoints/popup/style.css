@@ -1,0 +1,247 @@
+body {
+  width: 380px;
+  margin: 0;
+  color: #f8fafc;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: radial-gradient(circle at 0% 0%, rgb(59 130 246 / 22%), transparent 42%),
+    radial-gradient(circle at 100% 0%, rgb(168 85 247 / 20%), transparent 46%),
+    linear-gradient(160deg, #020617 0%, #0b1120 52%, #101828 100%);
+}
+
+.qt-shell {
+  padding: 18px;
+}
+
+.qt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.qt-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.qt-brand-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: #e0f2fe;
+  font-size: 14px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgb(14 165 233 / 24%);
+}
+
+.qt-header h1 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.qt-header p {
+  margin: 3px 0 0;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.qt-card {
+  padding: 14px;
+  background: rgb(15 23 42 / 78%);
+  border: 1px solid rgb(148 163 184 / 18%);
+  border-radius: 16px;
+  box-shadow: 0 16px 38px rgb(2 6 23 / 28%);
+  backdrop-filter: blur(10px);
+}
+
+.qt-card + .qt-card {
+  margin-top: 12px;
+}
+
+.qt-card h2 {
+  margin: 0 0 12px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.qt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.qt-label {
+  display: block;
+  margin-bottom: 7px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.qt-origin {
+  display: block;
+  max-width: 210px;
+  overflow: hidden;
+  color: #e2e8f0;
+  font-size: 13px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qt-select {
+  width: 100%;
+  padding: 10px 12px;
+  color: #f8fafc;
+  background: rgb(2 6 23 / 72%);
+  border: 1px solid rgb(148 163 184 / 24%);
+  border-radius: 12px;
+  outline: none;
+}
+
+.qt-select:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgb(56 189 248 / 16%);
+}
+
+.qt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgb(148 163 184 / 12%);
+  border: 1px solid rgb(148 163 184 / 20%);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.qt-chip[data-tone="active"] {
+  color: #86efac;
+  background: rgb(34 197 94 / 12%);
+  border-color: rgb(34 197 94 / 28%);
+}
+
+.qt-chip[data-tone="all"] {
+  color: #c4b5fd;
+  background: rgb(139 92 246 / 14%);
+  border-color: rgb(139 92 246 / 30%);
+}
+
+.qt-chip[data-tone="muted"] {
+  color: #94a3b8;
+}
+
+.qt-status {
+  min-height: 17px;
+  margin: 10px 0 0;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.qt-status[data-tone="error"] {
+  color: #fca5a5;
+}
+
+.qt-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.qt-button {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 58px;
+  padding: 10px 12px;
+  color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+  background: rgb(30 41 59 / 72%);
+  border: 1px solid rgb(148 163 184 / 16%);
+  border-radius: 13px;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.qt-button span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.qt-button small {
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.qt-button:hover {
+  transform: translateY(-1px);
+  border-color: rgb(148 163 184 / 34%);
+  background: rgb(51 65 85 / 78%);
+}
+
+.qt-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.qt-button--primary {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  border-color: transparent;
+  box-shadow: 0 10px 22px rgb(14 165 233 / 22%);
+}
+
+.qt-button--primary:hover {
+  background: linear-gradient(135deg, #38bdf8, #818cf8);
+}
+
+.qt-button--secondary {
+  color: #e0f2fe;
+  background: rgb(14 165 233 / 12%);
+  border-color: rgb(14 165 233 / 30%);
+}
+
+.qt-button--ghost {
+  color: #cbd5e1;
+  background: transparent;
+}
+
+.qt-button--danger {
+  color: #fecdd3;
+  background: rgb(244 63 94 / 12%);
+  border-color: rgb(244 63 94 / 28%);
+}
+
+.qt-note {
+  margin: 12px 0 0;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.5;
+}

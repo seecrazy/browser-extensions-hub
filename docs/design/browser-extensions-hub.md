@@ -1051,3 +1051,9 @@ type TranslateSettings = {
 - 静态：`activeTab`, `scripting`, `storage`, `https://translate.googleapis.com/*`。
 - Optional：`http://*/*`, `https://*/*`。
 - 无默认 page access；只有用户逐 site 授权后才生效。
+
+## Iteration 5 supplement: all-sites access and UI
+
+Quick Translate adds an optional all-sites mode. The mode uses `http://*/*` and `https://*/*` as optional permissions, requires explicit popup consent, and can be revoked. Per-origin disable entries still override all-site access.
+
+The popup UI is upgraded to a compact modern control surface with clear activation states, permission chips, and accessible status text. This is a UI standard for plugin-local configuration surfaces, not a shared framework UI dependency.

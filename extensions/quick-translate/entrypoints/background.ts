@@ -4,9 +4,12 @@ import { onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import { quickTranslateMessages } from "../lib/messages";
 import {
-  setSiteEnabled,
+  isAllSitesPermissionGranted,
   isSitePermissionGranted,
+  registerAllSitesContentScript,
   registerSiteContentScript,
+  setSiteEnabled,
+  unregisterAllSitesContentScript,
   unregisterSiteContentScript,
 } from "../lib/site-access";
 import { translateText, truncateTranslationText } from "../lib/translate";
@@ -37,6 +40,19 @@ async function syncSiteAccess(): Promise<void> {
     }
 
     await registerSiteContentScript(origin);
+  }
+
+  const allGranted = await isAllSitesPermissionGranted();
+
+  if (nextSettings.enabledAllSites && !allGranted) {
+    await unregisterAllSitesContentScript();
+    nextSettings = {
+      ...nextSettings,
+      enabledAllSites: false,
+    };
+    changed = true;
+  } else if (nextSettings.enabledAllSites && allGranted) {
+    await registerAllSitesContentScript();
   }
 
   if (changed) {

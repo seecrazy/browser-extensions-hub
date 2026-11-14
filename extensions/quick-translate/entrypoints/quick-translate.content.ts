@@ -1,8 +1,7 @@
 import { createMessageSender } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import { quickTranslateMessages } from "../lib/messages";
-import { translateDefaults, validateTranslateSettings } from "../lib/types";
-import { isRtlLanguage } from "../lib/types";
+import { isRtlLanguage, translateDefaults, validateTranslateSettings } from "../lib/types";
 
 const settingsStorage = createNamespacedStorage(
   "quick-translate.settings",

@@ -14,7 +14,8 @@ Translate user-selected text in an approved tab with a local bubble.
 
 1. **This tab**: popup uses activeTab to inject content script; selection changes trigger translation.
 2. **This site**: popup requests an optional host permission for the exact origin; background registers a persistent content script for that origin.
-3. Background calls Google Translate with an AbortController timeout and returns parsed text.
+3. **All sites**: popup requests optional access to http and https origins after an explicit click; background registers one all-site content script.
+4. Background calls Google Translate with an AbortController timeout and returns parsed text.
 
 ## Permissions
 
@@ -30,6 +31,7 @@ Translate user-selected text in an approved tab with a local bubble.
 - Selections in editable fields are ignored.
 - Text is limited to 1,000 characters.
 - Only Google Translate is supported in v0.1.
+- All-site access can be revoked globally; per-site disable entries act as exceptions.
 - The bubble uses textContent, never innerHTML.
 
 ## Development

@@ -19,3 +19,6 @@ Run after `pnpm build` before tagging a release.
 - [ ] Always on this site requests one-origin permission.
 - [ ] Approved site auto-injects after reload.
 - [ ] Disable on this site removes the permission and registered script.
+- [ ] Enable all sites asks for optional http/https permission once.
+- [ ] All-site mode injects on multiple sites without another prompt.
+- [ ] Disabling all sites removes the registered script.

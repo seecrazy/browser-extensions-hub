@@ -33,6 +33,8 @@ describe("quick translate site access", () => {
       origin: "https://example.com",
       pattern: "https://example.com/*",
       enabled: true,
+      allSites: false,
+      disabledOnThisOrigin: false,
       supported: true,
     });
 
@@ -42,6 +44,8 @@ describe("quick translate site access", () => {
       origin: "https://example.com",
       pattern: "https://example.com/*",
       enabled: false,
+      allSites: false,
+      disabledOnThisOrigin: false,
       supported: true,
     });
   });

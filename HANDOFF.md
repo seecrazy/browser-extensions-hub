@@ -15,7 +15,8 @@ Iteration 4 is implemented on `main`.
 - Ten plugins cover NTP, browsingData, content scripts, clipboard, and canvas page scenarios.
 - Shared storage writes are serialized per namespace.
 - Shared injection and status helpers reduce popup duplication.
-- Quick Translate supports one-tab and optional per-site access without default broad host permissions.
+- Quick Translate supports one-tab, optional per-site, and optional all-site access without default broad host permissions.
+- Quick Translate has a modern compact popup for language and access controls.
 - Store readiness validation, QA checklists, per-plugin docs, coverage, CodeQL, release smoke checks, and a Playwright E2E skeleton are present.
 - Store listing, privacy, permission, and screenshot documents exist for all shipped plugins.
 - Turbo dead config has been removed; builds use `pnpm -r`.

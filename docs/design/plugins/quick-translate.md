@@ -51,3 +51,13 @@ See also:
 - [`extensions/quick-translate/README.md`](../../extensions/quick-translate/README.md)
 - [`extensions/quick-translate/PLUGIN.md`](../../extensions/quick-translate/PLUGIN.md)
 - [`docs/qa/quick-translate.md`](../../docs/qa/quick-translate.md)
+
+## Iteration 5 supplement
+
+Quick Translate supports three access modes:
+
+1. **This tab only**: `activeTab` runtime injection.
+2. **This site**: optional host permission for the exact origin.
+3. **All sites**: explicit optional access to `http://*/*` and `https://*/*`.
+
+All-site access can be revoked globally. A per-origin disable list overrides all-site mode. The popup is the consent surface; content scripts do not request permissions.

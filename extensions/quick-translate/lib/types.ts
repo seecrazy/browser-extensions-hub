@@ -6,6 +6,8 @@ export type TranslateSettings = {
   targetLanguage: string;
   timeoutMs: number;
   enabledOrigins: string[];
+  enabledAllSites: boolean;
+  disabledOrigins: string[];
 };
 
 export type TranslationResult = {
@@ -19,6 +21,8 @@ export const translateDefaults: TranslateSettings = {
   targetLanguage: "en",
   timeoutMs: 6000,
   enabledOrigins: [],
+  enabledAllSites: false,
+  disabledOrigins: [],
 };
 
 export const RTL_LANGUAGES = new Set(["ar", "he", "fa", "ur", "ps", "sd", "ug", "yi"]);
@@ -47,6 +51,14 @@ export function validateTranslateSettings(value: unknown): TranslateSettings {
       ? [
           ...new Set(
             record.enabledOrigins.filter((origin): origin is string => typeof origin === "string"),
+          ),
+        ]
+      : [],
+    enabledAllSites: record.enabledAllSites === true,
+    disabledOrigins: Array.isArray(record.disabledOrigins)
+      ? [
+          ...new Set(
+            record.disabledOrigins.filter((origin): origin is string => typeof origin === "string"),
           ),
         ]
       : [],
