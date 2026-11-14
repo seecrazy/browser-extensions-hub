@@ -18,7 +18,6 @@ const cache = new Map<string, string>();
 const hostId = "__hub-quick-translate-host__";
 let shadowRoot: ShadowRoot | null = null;
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-let currentSelectionText = "";
 let temporaryOriginActive = false;
 
 function getShadowRoot(): ShadowRoot {
@@ -272,7 +271,7 @@ function handleSelectionChange(): void {
 
     const text = selection.toString().trim();
 
-    if (!text || text === currentSelectionText) {
+    if (!text) {
       return;
     }
 
@@ -303,6 +302,13 @@ function listenForTemporaryActivation(): void {
   onContractMessage(quickTranslateMessages, {
     QUICK_TRANSLATE_ENABLE_TEMPORARY: () => {
       temporaryOriginActive = true;
+      const selection = document.getSelection();
+
+      if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+        currentSelectionText = "";
+        void translateSelection(selection);
+      }
+
       return {
         active: true,
       };

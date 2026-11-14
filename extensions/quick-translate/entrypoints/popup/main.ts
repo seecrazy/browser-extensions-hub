@@ -3,18 +3,21 @@ import { createTabMessageSender } from "@hub/shared/messaging";
 import "@hub/shared/ui/styles.css";
 import "./style.css";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { createAdvancedSettings, createLabel, createStatusView } from "@hub/shared/ui";
+import { createStatusView } from "@hub/shared/ui";
 import {
   disableAllSitesAccess,
   disableSiteAccess,
-  enableAllSitesAccess,
-  enableSiteAccess,
+  registerAllSitesContentScript,
+  registerSiteContentScript,
+  requestAllSitesPermission,
+  requestSitePermission,
   getSiteAccessUi,
   isAllSitesPermissionGranted,
   isSitePermissionGranted,
   normalizeOrigin,
   reconcileRevokedSiteAccess,
   setOriginDisabled,
+  setSiteEnabled,
 } from "../../lib/site-access";
 import { quickTranslateMessages } from "../../lib/messages";
 import { translateDefaults } from "../../lib/types";
@@ -22,6 +25,7 @@ import type { TranslateSettings } from "../../lib/types";
 
 const settingsStorage = createNamespacedStorage("quick-translate.settings", translateDefaults);
 const languageSelect = document.querySelector<HTMLSelectElement>("#language");
+const timeoutSelect = document.querySelector<HTMLSelectElement>("#timeout");
 const originLabel = document.querySelector<HTMLElement>("#origin");
 const siteStateChip = document.querySelector<HTMLSpanElement>("#site-state");
 const siteToggleButton = document.querySelector<HTMLButtonElement>("#site-toggle");
@@ -31,28 +35,6 @@ const activateButton = document.querySelector<HTMLButtonElement>("#activate");
 const enableAllButton = document.querySelector<HTMLButtonElement>("#enable-all");
 const disableAllButton = document.querySelector<HTMLButtonElement>("#disable-all");
 const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
-const timeoutLabel = createLabel("Request timeout", "timeout");
-const timeoutSelect = document.createElement("select");
-timeoutSelect.id = "timeout";
-timeoutSelect.className = "hub-select";
-const timeoutOptions: Array<[number, string]> = [
-  [2000, "2 seconds"],
-  [6000, "6 seconds"],
-  [10000, "10 seconds"],
-  [15000, "15 seconds"],
-  [20000, "20 seconds"],
-];
-
-for (const [value, label] of timeoutOptions) {
-  const option = document.createElement("option");
-  option.value = String(value);
-  option.textContent = label;
-  timeoutSelect.append(option);
-}
-const timeoutAdvanced = createAdvancedSettings([timeoutLabel, timeoutSelect], {
-  label: "Advanced request settings",
-});
-document.querySelector("#advanced")?.append(timeoutAdvanced.root);
 const sendTabMessage = createTabMessageSender(quickTranslateMessages);
 
 let currentOrigin: string | null = null;
@@ -223,7 +205,15 @@ siteToggleButton?.addEventListener("click", async () => {
     } else if (ui.allSites && ui.disabledOnThisOrigin) {
       nextSettings = setOriginDisabled(settings, currentOrigin, false);
     } else {
-      nextSettings = await enableSiteAccess(settings, currentOrigin);
+      const granted = await requestSitePermission(currentOrigin);
+
+      if (!granted) {
+        statusView.set("Site permission was not granted.", true);
+        return;
+      }
+
+      await registerSiteContentScript(currentOrigin);
+      nextSettings = setSiteEnabled(settings, currentOrigin, true);
     }
 
     await settingsStorage.patch(nextSettings);
@@ -245,15 +235,26 @@ siteToggleButton?.addEventListener("click", async () => {
 
 enableAllButton?.addEventListener("click", async () => {
   try {
+    const granted = await requestAllSitesPermission();
+
+    if (!granted) {
+      statusView.set("All-site permission was not granted.", true);
+      return;
+    }
+
+    await registerAllSitesContentScript();
     const settings = await settingsStorage.get();
-    const nextSettings = await enableAllSitesAccess(settings);
+    const nextSettings: TranslateSettings = {
+      ...settings,
+      enabledAllSites: true,
+    };
     await settingsStorage.patch(nextSettings);
     await injectCurrentTab();
     renderSiteState(nextSettings);
     statusView.set("Enabled on all sites.");
   } catch (error) {
     statusView.set(
-      error instanceof Error ? error.message : "All-site permission was not granted.",
+      error instanceof Error ? error.message : "Unable to update all-site access.",
       true,
     );
   }
