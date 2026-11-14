@@ -8,10 +8,11 @@ import {
   disableSiteAccess,
   enableAllSitesAccess,
   enableSiteAccess,
-  getSiteAccessState,
+  getSiteAccessUi,
   isAllSitesPermissionGranted,
   isSitePermissionGranted,
   normalizeOrigin,
+  reconcileRevokedSiteAccess,
 } from "../../lib/site-access";
 import { translateDefaults } from "../../lib/types";
 import type { TranslateSettings } from "../../lib/types";
@@ -52,51 +53,30 @@ function setButton(element: HTMLButtonElement | null, hidden: boolean): void {
 }
 
 function renderSiteState(settings: TranslateSettings): void {
-  const state = getSiteAccessState(settings, currentOrigin ?? undefined);
+  const ui = getSiteAccessUi(settings, currentOrigin ?? undefined);
 
   if (originLabel) {
-    originLabel.textContent = state.origin || "Unsupported page";
+    originLabel.textContent = ui.origin || "Unsupported page";
   }
 
-  setChip(allSitesChip, "All-site access", "all", !settings.enabledAllSites);
+  setChip(allSitesChip, "All-site access", "all", !ui.allSites);
 
-  if (!state.supported) {
+  if (!ui.supported) {
     setChip(siteStateChip, "Unsupported page", "muted");
-    setButton(enableSiteButton, true);
-    setButton(disableSiteButton, true);
-    setButton(enableAllButton, !settings.enabledAllSites);
-    setButton(disableAllButton, settings.enabledAllSites);
-    return;
-  }
-
-  if (settings.enabledAllSites) {
-    if (state.disabledOnThisOrigin) {
-      setChip(siteStateChip, "Disabled on this site", "muted");
-      setButton(enableSiteButton, true);
-      setButton(disableSiteButton, true);
-    } else {
-      setChip(siteStateChip, "Enabled via all sites", "active");
-      setButton(enableSiteButton, false);
-      setButton(disableSiteButton, true);
-    }
-
-    setButton(enableAllButton, false);
-    setButton(disableAllButton, true);
-    return;
-  }
-
-  if (state.enabled) {
+  } else if (ui.disabledOnThisOrigin) {
+    setChip(siteStateChip, "Disabled on this site", "muted");
+  } else if (ui.allSites) {
+    setChip(siteStateChip, "Enabled via all sites", "active");
+  } else if (ui.siteEnabled) {
     setChip(siteStateChip, "Enabled for this site", "active");
-    setButton(enableSiteButton, false);
-    setButton(disableSiteButton, true);
   } else {
     setChip(siteStateChip, "Not enabled", "muted");
-    setButton(enableSiteButton, false);
-    setButton(disableSiteButton, true);
   }
 
-  setButton(enableAllButton, false);
-  setButton(disableAllButton, true);
+  setButton(enableSiteButton, !ui.showEnableSite);
+  setButton(disableSiteButton, !ui.showDisableSite);
+  setButton(enableAllButton, !ui.showEnableAll);
+  setButton(disableAllButton, !ui.showDisableAll);
 }
 
 async function loadState(): Promise<void> {
@@ -114,16 +94,18 @@ async function loadState(): Promise<void> {
       isAllSitesPermissionGranted(),
     ]);
 
-    // Reconcile stored state if the user revoked access from browser settings.
-    if (!siteGranted) {
-      settings.enabledOrigins = settings.enabledOrigins.filter(
-        (origin) => origin !== currentOrigin,
-      );
+    const reconciledSettings = reconcileRevokedSiteAccess(settings, {
+      origin: currentOrigin,
+      siteGranted,
+      allGranted,
+    });
+
+    if (reconciledSettings !== settings) {
+      await settingsStorage.patch(reconciledSettings);
     }
 
-    if (!allGranted) {
-      settings.enabledAllSites = false;
-    }
+    renderSiteState(reconciledSettings);
+    return;
   }
 
   renderSiteState(settings);

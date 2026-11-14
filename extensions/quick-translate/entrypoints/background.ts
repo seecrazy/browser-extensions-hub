@@ -3,15 +3,7 @@ import { browser } from "wxt/browser";
 import { onContractMessage } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import { quickTranslateMessages } from "../lib/messages";
-import {
-  isAllSitesPermissionGranted,
-  isSitePermissionGranted,
-  registerAllSitesContentScript,
-  registerSiteContentScript,
-  setSiteEnabled,
-  unregisterAllSitesContentScript,
-  unregisterSiteContentScript,
-} from "../lib/site-access";
+import { syncRegisteredSiteScripts } from "../lib/site-access";
 import { translateText, truncateTranslationText } from "../lib/translate";
 import { translateDefaults, validateTranslateSettings } from "../lib/types";
 
@@ -26,34 +18,7 @@ const settingsStorage = createNamespacedStorage(
 
 async function syncSiteAccess(): Promise<void> {
   const settings = await settingsStorage.get();
-  let nextSettings = settings;
-  let changed = false;
-
-  for (const origin of settings.enabledOrigins) {
-    const granted = await isSitePermissionGranted(origin);
-
-    if (!granted) {
-      await unregisterSiteContentScript(origin);
-      nextSettings = setSiteEnabled(nextSettings, origin, false);
-      changed = true;
-      continue;
-    }
-
-    await registerSiteContentScript(origin);
-  }
-
-  const allGranted = await isAllSitesPermissionGranted();
-
-  if (nextSettings.enabledAllSites && !allGranted) {
-    await unregisterAllSitesContentScript();
-    nextSettings = {
-      ...nextSettings,
-      enabledAllSites: false,
-    };
-    changed = true;
-  } else if (nextSettings.enabledAllSites && allGranted) {
-    await registerAllSitesContentScript();
-  }
+  const { settings: nextSettings, changed } = await syncRegisteredSiteScripts(settings);
 
   if (changed) {
     await settingsStorage.patch(nextSettings);

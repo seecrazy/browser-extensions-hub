@@ -1,6 +1,7 @@
 import { createMessageSender } from "@hub/shared/messaging";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import { quickTranslateMessages } from "../lib/messages";
+import { isOriginActive } from "../lib/site-access";
 import { isRtlLanguage, translateDefaults, validateTranslateSettings } from "../lib/types";
 
 const settingsStorage = createNamespacedStorage(
@@ -202,6 +203,12 @@ async function translateSelection(selection: Selection): Promise<void> {
   }
 
   const settings = await settingsStorage.get();
+
+  if (!isOriginActive(settings, document.location.origin)) {
+    hideBubble();
+    return;
+  }
+
   const text = rawText.length > 1000 ? `${rawText.slice(0, 1000)}...` : rawText;
   const cacheKey = `${settings.targetLanguage}:${text}`;
   const cached = cache.get(cacheKey);

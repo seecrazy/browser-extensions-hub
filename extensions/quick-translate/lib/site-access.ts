@@ -5,6 +5,18 @@ import type { TranslateSettings } from "./types";
 export const ALL_SITE_PATTERNS = ["http://*/*", "https://*/*"];
 export const ALL_SITE_SCRIPT_ID = "quick-translate-all-sites";
 
+export type SiteAccessUi = {
+  origin: string;
+  supported: boolean;
+  allSites: boolean;
+  siteEnabled: boolean;
+  disabledOnThisOrigin: boolean;
+  showEnableSite: boolean;
+  showDisableSite: boolean;
+  showEnableAll: boolean;
+  showDisableAll: boolean;
+};
+
 export type SiteAccessState = {
   origin: string;
   pattern?: string;
@@ -152,6 +164,55 @@ export async function isSitePermissionGranted(origin: string): Promise<boolean> 
   return browser.permissions.contains({
     origins: [pattern],
   });
+}
+
+export function getSiteAccessUi(
+  settings: TranslateSettings,
+  origin: string | undefined,
+): SiteAccessUi {
+  const state = getSiteAccessState(settings, origin);
+  const showEnableSite =
+    state.supported && (!state.allSites || state.disabledOnThisOrigin) && !state.enabled;
+  const showDisableSite =
+    state.supported &&
+    ((state.allSites && !state.disabledOnThisOrigin) || (!state.allSites && state.enabled));
+
+  return {
+    origin: state.origin,
+    supported: state.supported,
+    allSites: state.allSites,
+    siteEnabled: state.enabled,
+    disabledOnThisOrigin: state.disabledOnThisOrigin,
+    showEnableSite,
+    showDisableSite,
+    showEnableAll: !state.allSites,
+    showDisableAll: state.allSites,
+  };
+}
+
+export function reconcileRevokedSiteAccess(
+  settings: TranslateSettings,
+  input: {
+    origin?: string;
+    siteGranted: boolean;
+    allGranted: boolean;
+  },
+): TranslateSettings {
+  let nextSettings = settings;
+  const origin = normalizeOrigin(input.origin);
+
+  if (origin && !input.siteGranted) {
+    nextSettings = setSiteEnabled(nextSettings, origin, false);
+  }
+
+  if (!input.allGranted) {
+    nextSettings = {
+      ...nextSettings,
+      enabledAllSites: false,
+    };
+  }
+
+  return nextSettings;
 }
 
 export async function isAllSitesPermissionGranted(): Promise<boolean> {
@@ -311,14 +372,19 @@ export async function disableSiteAccess(
   return setSiteEnabled(settings, origin, false);
 }
 
-export async function syncRegisteredSiteScripts(settings: TranslateSettings): Promise<void> {
+export async function syncRegisteredSiteScripts(
+  settings: TranslateSettings,
+): Promise<{ settings: TranslateSettings; changed: boolean }> {
   const registered = await browser.scripting.getRegisteredContentScripts();
   const registeredIds = new Set(
     registered
       .filter((script) => script.id?.startsWith("quick-translate-"))
       .map((script) => script.id),
   );
-  const expectedIds = new Set(settings.enabledOrigins.map(createSiteScriptId));
+  const expectedIds = new Set([
+    ...settings.enabledOrigins.map(createSiteScriptId),
+    ...(settings.enabledAllSites ? [ALL_SITE_SCRIPT_ID] : []),
+  ]);
 
   for (const id of registeredIds) {
     if (!expectedIds.has(id)) {
@@ -328,27 +394,39 @@ export async function syncRegisteredSiteScripts(settings: TranslateSettings): Pr
     }
   }
 
+  let nextSettings = settings;
+  let changed = false;
+
   for (const origin of settings.enabledOrigins) {
     const granted = await isSitePermissionGranted(origin);
 
     if (!granted) {
-      await browser.scripting.unregisterContentScripts({
-        ids: [createSiteScriptId(origin)],
-      });
+      await unregisterSiteContentScript(origin);
+      nextSettings = setSiteEnabled(nextSettings, origin, false);
+      changed = true;
       continue;
     }
 
     await registerSiteContentScript(origin);
   }
 
-  if (settings.enabledAllSites) {
+  if (nextSettings.enabledAllSites) {
     const granted = await isAllSitesPermissionGranted();
 
     if (!granted) {
       await unregisterAllSitesContentScript();
-      return;
+      nextSettings = {
+        ...nextSettings,
+        enabledAllSites: false,
+      };
+      changed = true;
+    } else {
+      await registerAllSitesContentScript();
     }
-
-    await registerAllSitesContentScript();
   }
+
+  return {
+    settings: nextSettings,
+    changed,
+  };
 }
