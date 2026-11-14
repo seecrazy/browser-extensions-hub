@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Save only explicit copy events in a local, expirable history.
+Save only explicit copy events in a local history.
 
 ## Goals
 
 - No clipboardRead permission.
 - Capture only explicit `copy` events.
-- Support per-site disable and expiry.
+- Support per-site disable.
 - Dedupe and cap history at 50 items.
 
 ## Architecture
@@ -19,7 +19,7 @@ Save only explicit copy events in a local, expirable history.
 
 ## Data and state
 
-`clipboard-history.settings` stores history, disabled origins, and expiry days.
+`clipboard-history.settings` stores history and disabled origins.
 
 ## User flow
 
@@ -35,12 +35,11 @@ Primary APIs: ClipboardEvent, runtime injection, `chrome.storage.local`, Clipboa
 
 - Does not monitor keystrokes or read the clipboard API.
 - Text is capped at 10,000 characters.
-- History expires after the configured number of days.
 - Disabled origins do not record data.
 
 ## Verification
 
-History dedupe, expiry, search, per-site toggle, and settings validation are unit tested.
+History dedupe, search, per-site toggle, and settings validation are unit tested.
 
 See also:
 

@@ -1,12 +1,12 @@
 # Clipboard History Lite
 
-Save only explicit copy events in a local, expirable history.
+Save only explicit copy events in a local history.
 
 ## Features
 
 - No clipboardRead permission.
 - Capture only explicit `copy` events.
-- Support per-site disable and expiry.
+- Support per-site disable.
 - Dedupe and cap history at 50 items.
 
 ## How it works
@@ -19,17 +19,16 @@ Popup enables the content script; content script listens for copy events and sav
 
 ## Configuration
 
-Site access and history are always visible. Retention days are in **Advanced retention**.
+Site access and history are always visible.
 
 ## Data model
 
-`clipboard-history.settings` stores history, disabled origins, and expiry days.
+`clipboard-history.settings` stores history and disabled origins.
 
 ## Limitations
 
 - Does not monitor keystrokes or read the clipboard API.
 - Text is capped at 10,000 characters.
-- History expires after the configured number of days.
 - Disabled origins do not record data.
 
 ## Development

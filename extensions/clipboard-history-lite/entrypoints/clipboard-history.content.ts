@@ -3,7 +3,6 @@ import {
   addClipboardItem,
   clipboardDefaults,
   isOriginDisabled,
-  removeExpiredItems,
   validateClipboardSettings,
 } from "../lib/types";
 
@@ -47,8 +46,7 @@ async function initialize(): Promise<void> {
             return settings;
           }
 
-          const withoutExpired = removeExpiredItems(settings);
-          const next = addClipboardItem(withoutExpired, copiedText(event));
+          const next = addClipboardItem(settings, copiedText(event));
           await settingsStorage.patch(next);
           return next;
         })

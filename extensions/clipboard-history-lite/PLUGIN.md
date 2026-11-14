@@ -4,7 +4,6 @@
 
 - Local explicit copy history
 - per-site disable
-- expiry
 
 ## Permissions
 

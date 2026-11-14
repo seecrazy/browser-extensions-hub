@@ -8,14 +8,12 @@ export type ClipboardSettings = {
   schemaVersion: 1;
   history: ClipboardItem[];
   disabledOrigins: string[];
-  expiresAtDays: number;
 };
 
 export const clipboardDefaults: ClipboardSettings = {
   schemaVersion: 1,
   history: [],
   disabledOrigins: [],
-  expiresAtDays: 7,
 };
 
 export const MAX_HISTORY_ITEMS = 50;
@@ -54,7 +52,6 @@ export function addClipboardItem(settings: ClipboardSettings, text: string): Cli
   return {
     schemaVersion: 1,
     disabledOrigins: settings.disabledOrigins,
-    expiresAtDays: settings.expiresAtDays,
     history: [item, ...withoutDuplicate].slice(0, MAX_HISTORY_ITEMS),
   };
 }
@@ -63,7 +60,6 @@ export function removeClipboardItem(settings: ClipboardSettings, id: string): Cl
   return {
     schemaVersion: 1,
     disabledOrigins: settings.disabledOrigins,
-    expiresAtDays: settings.expiresAtDays,
     history: settings.history.filter((item) => item.id !== id),
   };
 }
@@ -72,7 +68,6 @@ export function clearClipboardHistory(_settings: ClipboardSettings): ClipboardSe
   return {
     schemaVersion: 1,
     disabledOrigins: [],
-    expiresAtDays: 7,
     history: [],
   };
 }
@@ -119,19 +114,6 @@ export function toggleOrigin(settings: ClipboardSettings, origin: string): Clipb
   };
 }
 
-export function removeExpiredItems(
-  settings: ClipboardSettings,
-  now = Date.now(),
-): ClipboardSettings {
-  const expiresAtDays = Math.min(365, Math.max(1, Math.round(settings.expiresAtDays)));
-  const cutoff = now - expiresAtDays * 24 * 60 * 60 * 1000;
-
-  return {
-    ...settings,
-    history: settings.history.filter((item) => item.createdAt >= cutoff),
-  };
-}
-
 export function validateClipboardSettings(value: unknown): ClipboardSettings {
   const record =
     typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
@@ -157,11 +139,5 @@ export function validateClipboardSettings(value: unknown): ClipboardSettings {
     disabledOrigins: [
       ...new Set(disabledValue.filter((origin): origin is string => typeof origin === "string")),
     ],
-    expiresAtDays:
-      typeof record.expiresAtDays === "number" &&
-      record.expiresAtDays >= 1 &&
-      record.expiresAtDays <= 365
-        ? Math.round(record.expiresAtDays)
-        : 7,
   };
 }

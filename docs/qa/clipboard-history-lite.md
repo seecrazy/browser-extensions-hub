@@ -8,7 +8,6 @@ Run after `pnpm build` before tagging a release.
 - [ ] Copy it again and confirm dedupe moves it to top.
 - [ ] Click Copy in popup.
 - [ ] Disable site, copy again, and confirm it is not saved.
-- [ ] Set expiry and remove older items.
 - [ ] Clear history and confirm empty.
 
 ## Result

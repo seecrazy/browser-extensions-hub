@@ -39,6 +39,7 @@
 - [x] Playwright E2E skeleton.
 - [x] Quick Translate optional per-site access. (Later reverted.)
 - [x] Quick Translate temporary tab access fix. (Later reverted.)
+- [x] Clipboard expiry removal after scope simplification.
 
 ## In progress
 

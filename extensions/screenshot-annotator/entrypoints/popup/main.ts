@@ -15,7 +15,7 @@ async function openAnnotator(dataUrl: string): Promise<void> {
 }
 
 captureButton?.addEventListener("click", async () => {
-  if (!captureButton || !status) {
+  if (!captureButton) {
     return;
   }
 

@@ -961,10 +961,9 @@ popup 不再重复实现注入逻辑。
 
 ### Clipboard History Lite
 
-- settings 增加 `enabledOrigins`, `disabledOrigins`, `expiresAtDays`。
+- settings 增加 `disabledOrigins`。
 - content script 保存前检查当前 origin 是否禁用。
 - popup 可 disable/enable 当前 origin。
-- 渲染前移除过期项。
 - 仍不申请 `clipboardRead`。
 
 ### Privacy Cleaner

@@ -57,41 +57,44 @@ function applyDarkMode(enabled: boolean, strength: number): void {
   `;
 }
 
-async function initialize(): Promise<void> {
-  const installedMarker = "__hubDarkModeLiteInstalled";
-  const windowWithMarker = window as typeof window & Record<string, boolean | undefined>;
-
-  if (windowWithMarker[installedMarker]) {
-    return;
-  }
-
-  windowWithMarker[installedMarker] = true;
-  const origin = document.location.origin;
-  let siteState = getSiteState(await settingsStorage.get(), origin);
-  applyDarkMode(siteState.settings.enabled, siteState.settings.strength);
-
-  settingsStorage.subscribe((nextSettings) => {
-    siteState = getSiteState(nextSettings, origin);
-    applyDarkMode(siteState.settings.enabled, siteState.settings.strength);
-  });
-
-  onContractMessage(darkModeMessages, {
-    DARK_MODE_GET_SITE_STATE: () => siteState,
-    DARK_MODE_SET_SITE_STATE: async (payload) => {
-      const nextSettings = patchSiteState(await settingsStorage.get(), origin, payload);
-      await settingsStorage.patch(nextSettings);
-      siteState = getSiteState(nextSettings, origin);
-      return siteState;
-    },
-  });
-}
-
 export default defineContentScript({
   matches: [],
   registration: "runtime",
   runAt: "document_idle",
   allFrames: false,
   main() {
-    void initialize();
+    const installedMarker = "__hubDarkModeLiteInstalled";
+    const windowWithMarker = window as typeof window & Record<string, boolean | undefined>;
+
+    if (windowWithMarker[installedMarker]) {
+      return;
+    }
+
+    windowWithMarker[installedMarker] = true;
+    const origin = document.location.origin;
+
+    // Register the handler before any asynchronous storage work so the popup can
+    // safely message this runtime-injected content script immediately.
+    let siteState = getSiteState(darkModeDefaults, origin);
+
+    onContractMessage(darkModeMessages, {
+      DARK_MODE_GET_SITE_STATE: () => siteState,
+      DARK_MODE_SET_SITE_STATE: async (payload) => {
+        const nextSettings = patchSiteState(await settingsStorage.get(), origin, payload);
+        await settingsStorage.patch(nextSettings);
+        siteState = getSiteState(nextSettings, origin);
+        return siteState;
+      },
+    });
+
+    void settingsStorage.get().then((nextSettings) => {
+      siteState = getSiteState(nextSettings, origin);
+      applyDarkMode(siteState.settings.enabled, siteState.settings.strength);
+    });
+
+    settingsStorage.subscribe((nextSettings) => {
+      siteState = getSiteState(nextSettings, origin);
+      applyDarkMode(siteState.settings.enabled, siteState.settings.strength);
+    });
   },
 });

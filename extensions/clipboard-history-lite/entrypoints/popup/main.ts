@@ -1,6 +1,6 @@
 import { injectRuntimeContentScript } from "@hub/shared/injection";
 import { createNamespacedStorage } from "@hub/shared/storage";
-import { createAdvancedSettings, createLabel, createStatusView } from "@hub/shared/ui";
+import { createStatusView } from "@hub/shared/ui";
 import { browser } from "wxt/browser";
 import "@hub/shared/ui/styles.css";
 import {
@@ -9,7 +9,6 @@ import {
   isOriginDisabled,
   normalizeOrigin,
   removeClipboardItem,
-  removeExpiredItems,
   searchClipboardHistory,
   toggleOrigin,
   validateClipboardSettings,
@@ -21,14 +20,8 @@ const originLabel = document.querySelector<HTMLParagraphElement>("#origin");
 const activateButton = document.querySelector<HTMLButtonElement>("#activate");
 const originToggleButton = document.querySelector<HTMLButtonElement>("#toggle-origin");
 const searchInput = document.querySelector<HTMLInputElement>("#search");
-const expiryInput = document.querySelector<HTMLInputElement>("#expiry");
 const historyList = document.querySelector<HTMLUListElement>("#history");
 const clearButton = document.querySelector<HTMLButtonElement>("#clear");
-const expiryLabel = createLabel("Keep items for days", "expiry");
-const expiryAdvanced = createAdvancedSettings([expiryLabel, expiryInput as HTMLInputElement], {
-  label: "Advanced retention",
-});
-document.querySelector("#advanced")?.append(expiryAdvanced.root);
 const storage = createNamespacedStorage("clipboard-history.settings", clipboardDefaults, "local", {
   validate: validateClipboardSettings,
 });
@@ -44,7 +37,7 @@ async function copyText(item: ClipboardItem): Promise<void> {
 }
 
 async function render(): Promise<void> {
-  const settings = removeExpiredItems(await storage.get());
+  const settings = await storage.get();
   await storage.patch(settings);
   const items = searchClipboardHistory(settings, searchInput?.value ?? "");
 
@@ -57,10 +50,6 @@ async function render(): Promise<void> {
       ? "Enable on this site"
       : "Disable on this site";
     originToggleButton.disabled = !currentOrigin;
-  }
-
-  if (expiryInput) {
-    expiryInput.value = String(settings.expiresAtDays);
   }
 
   if (!historyList) {
@@ -130,14 +119,6 @@ originToggleButton?.addEventListener("click", async () => {
 
   await storage.patch(toggleOrigin(await storage.get(), currentOrigin));
   statusView.set("Saved site preference.");
-  await render();
-});
-
-expiryInput?.addEventListener("change", async () => {
-  await storage.patch({
-    expiresAtDays: Number(expiryInput.value),
-  });
-  statusView.set("Saved expiry.");
   await render();
 });
 

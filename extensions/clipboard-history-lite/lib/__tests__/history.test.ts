@@ -15,10 +15,7 @@ describe("clipboard history", () => {
   });
 
   it("moves duplicates to the top instead of growing history", () => {
-    const first = addClipboardItem(
-      { schemaVersion: 1, history: [], disabledOrigins: [], expiresAtDays: 7 },
-      "hello",
-    );
+    const first = addClipboardItem({ schemaVersion: 1, history: [], disabledOrigins: [] }, "hello");
     const second = addClipboardItem(first, "world");
     const third = addClipboardItem(second, "hello");
 
@@ -28,7 +25,7 @@ describe("clipboard history", () => {
 
   it("supports remove, clear, and search", () => {
     const first = addClipboardItem(
-      { schemaVersion: 1, history: [], disabledOrigins: [], expiresAtDays: 7 },
+      { schemaVersion: 1, history: [], disabledOrigins: [] },
       "important note",
     );
     const second = addClipboardItem(first, "other text");
