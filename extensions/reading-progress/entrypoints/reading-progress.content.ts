@@ -68,14 +68,6 @@ export default defineContentScript({
   runAt: "document_idle",
   allFrames: false,
   main() {
-    const installedMarker = "__hubReadingProgressInstalled";
-    const windowWithMarker = window as typeof window & Record<string, boolean | undefined>;
-
-    if (windowWithMarker[installedMarker]) {
-      return;
-    }
-
-    windowWithMarker[installedMarker] = true;
     const origin = document.location.origin;
 
     // Message handling must be registered synchronously because the popup sends

@@ -184,14 +184,6 @@ async function translateSelection(selection: Selection): Promise<void> {
 }
 
 async function initialize(): Promise<void> {
-  const installedMarker = "__hubQuickTranslateInstalled";
-  const windowWithMarker = window as typeof window & Record<string, boolean | undefined>;
-
-  if (windowWithMarker[installedMarker]) {
-    return;
-  }
-
-  windowWithMarker[installedMarker] = true;
   document.addEventListener(
     "mouseup",
     () => {

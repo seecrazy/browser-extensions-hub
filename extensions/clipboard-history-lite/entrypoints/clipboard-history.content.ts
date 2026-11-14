@@ -26,14 +26,6 @@ function copiedText(event: ClipboardEvent): string {
 }
 
 async function initialize(): Promise<void> {
-  const installedMarker = "__hubClipboardHistoryInstalled";
-  const windowWithMarker = window as typeof window & Record<string, boolean | undefined>;
-
-  if (windowWithMarker[installedMarker]) {
-    return;
-  }
-
-  windowWithMarker[installedMarker] = true;
   const origin = document.location.origin;
 
   document.addEventListener(

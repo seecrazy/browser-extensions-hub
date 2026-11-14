@@ -54,9 +54,12 @@ export type ContractHandlers<T extends MessageContract> = {
 
 export type SendOptions = {
   timeoutMs?: number;
+  connectionRetryMs?: number;
 };
 
 const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_CONNECTION_RETRY_MS = 500;
+const CONNECTION_RETRY_DELAY_MS = 25;
 
 function isResponse<T>(value: unknown): value is MessageResponse<T> {
   if (typeof value !== "object" || value === null) {
@@ -165,22 +168,37 @@ export function createTabMessageSender<TContract extends MessageContract>(contra
   ): Promise<MessageResponse<TContract[K]["response"]>> => {
     const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
-    try {
-      const response = await callChromeApi((callback) => {
-        chrome.tabs.sendMessage(tabId, message, callback);
-      }, timeoutMs);
-      return normalizeResponse<TContract[K]["response"]>(
-        response,
-        "Content script returned an invalid response.",
-      );
-    } catch (error) {
-      if (error instanceof Error && error.message === "__HUB_TIMEOUT__") {
-        return timeoutFailure(timeoutMs);
-      }
+    const retryMs = options.connectionRetryMs ?? DEFAULT_CONNECTION_RETRY_MS;
+    const deadline = Date.now() + retryMs;
 
-      return failure("TAB_MESSAGE_ERROR", error instanceof Error ? error.message : String(error));
+    for (;;) {
+      try {
+        const response = await callChromeApi((callback) => {
+          chrome.tabs.sendMessage(tabId, message, callback);
+        }, timeoutMs);
+        return normalizeResponse<TContract[K]["response"]>(
+          response,
+          "Content script returned an invalid response.",
+        );
+      } catch (error) {
+        if (error instanceof Error && error.message === "__HUB_TIMEOUT__") {
+          return timeoutFailure(timeoutMs);
+        }
+
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (!isReceivingEndError(message) || Date.now() >= deadline) {
+          return failure("TAB_MESSAGE_ERROR", message);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, CONNECTION_RETRY_DELAY_MS));
+      }
     }
   };
+}
+
+function isReceivingEndError(message: string): boolean {
+  return message.includes("Receiving end does not exist");
 }
 
 export function createContractDispatcher<TContract extends MessageContract>(

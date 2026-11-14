@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createContractDispatcher,
   createMessageSender,
+  createTabMessageSender,
   defineMessageContract,
   failure,
   success,
@@ -122,6 +123,74 @@ describe("createMessageSender", () => {
       ok: false,
       error: {
         code: "TIMEOUT",
+      },
+    });
+  });
+});
+
+describe("createTabMessageSender", () => {
+  it("retries while a runtime-injected content script registers its listener", async () => {
+    let calls = 0;
+
+    vi.stubGlobal("chrome", {
+      runtime: {
+        lastError: undefined,
+      },
+      tabs: {
+        sendMessage: vi.fn(
+          (_tabId: number, _message: unknown, callback: (result: unknown) => void) => {
+            calls += 1;
+
+            if (calls === 1) {
+              chrome.runtime.lastError = {
+                message: "Could not establish connection. Receiving end does not exist.",
+              };
+              callback(undefined);
+              chrome.runtime.lastError = undefined;
+              return;
+            }
+
+            callback(success({ pong: true }));
+          },
+        ),
+      },
+    });
+
+    const sendMessage = createTabMessageSender(contract);
+
+    await expect(sendMessage(1, { type: "PING" }, { connectionRetryMs: 100 })).resolves.toEqual(
+      success({ pong: true }),
+    );
+    expect(calls).toBe(2);
+  });
+
+  it("returns the receiving-end error after retries are exhausted", async () => {
+    vi.stubGlobal("chrome", {
+      runtime: {
+        lastError: undefined,
+      },
+      tabs: {
+        sendMessage: vi.fn(
+          (_tabId: number, _message: unknown, callback: (result: unknown) => void) => {
+            chrome.runtime.lastError = {
+              message: "Could not establish connection. Receiving end does not exist.",
+            };
+            callback(undefined);
+            chrome.runtime.lastError = undefined;
+          },
+        ),
+      },
+    });
+
+    const sendMessage = createTabMessageSender(contract);
+
+    await expect(
+      sendMessage(1, { type: "PING" }, { connectionRetryMs: 10 }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: {
+        code: "TAB_MESSAGE_ERROR",
+        message: expect.stringContaining("Receiving end does not exist"),
       },
     });
   });

@@ -83,18 +83,33 @@ async function applyVolume(level: number): Promise<VolumeMediaState> {
   };
 }
 
-async function initialize(): Promise<void> {
-  const installedMarker = "__hubVolumeBoosterInstalled";
-  const windowWithMarker = window as typeof window & Record<string, boolean | undefined>;
-
-  if (windowWithMarker[installedMarker]) {
-    return;
-  }
-
-  windowWithMarker[installedMarker] = true;
+function initialize(): void {
   const origin = document.location.origin;
-  let currentLevel = getSiteLevel(await settingsStorage.get(), origin);
-  let currentState = await applyVolume(currentLevel);
+  let currentLevel = getSiteLevel(volumeDefaults, origin);
+  let currentState: VolumeMediaState = {
+    level: currentLevel,
+    mediaCount: 0,
+    unsupportedCount: 0,
+    audioContextState: "none",
+  };
+
+  onContractMessage(volumeMessages, {
+    VOLUME_GET: () => currentState,
+    VOLUME_SET: async (payload) => {
+      currentLevel = payload.level;
+      currentState = await applyVolume(payload.level);
+      const nextSettings = patchSiteLevel(await settingsStorage.get(), origin, payload.level);
+      await settingsStorage.patch(nextSettings);
+      return currentState;
+    },
+  });
+
+  void settingsStorage.get().then((nextSettings) => {
+    currentLevel = getSiteLevel(nextSettings, origin);
+    void applyVolume(currentLevel).then((state) => {
+      currentState = state;
+    });
+  });
 
   settingsStorage.subscribe((nextSettings) => {
     currentLevel = getSiteLevel(nextSettings, origin);
@@ -122,17 +137,6 @@ async function initialize(): Promise<void> {
       passive: true,
     },
   );
-
-  onContractMessage(volumeMessages, {
-    VOLUME_GET: () => currentState,
-    VOLUME_SET: async (payload) => {
-      currentLevel = payload.level;
-      currentState = await applyVolume(payload.level);
-      const nextSettings = patchSiteLevel(await settingsStorage.get(), origin, payload.level);
-      await settingsStorage.patch(nextSettings);
-      return currentState;
-    },
-  });
 }
 
 export default defineContentScript({
