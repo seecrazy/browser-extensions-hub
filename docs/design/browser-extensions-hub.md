@@ -1062,7 +1062,7 @@ The popup UI is upgraded to a compact modern control surface with clear activati
 
 插件 UI 使用统一的“editorial print shop”视觉系统：
 
-- 字体：Bricolage Grotesque（display）、Newsreader（body）、Martian Mono（labels/data）。
+- 字体：Google Sans / Roboto / system fallback，与 Chrome UI 一致。
 - 色彩：warm paper、heavy ink、signal orange、cobalt、moss。
 - 深度：硬偏移阴影、registration marks、网格纹理。
 - 动效：一次编排式 staggered load，按钮和 chip 有触觉反馈。

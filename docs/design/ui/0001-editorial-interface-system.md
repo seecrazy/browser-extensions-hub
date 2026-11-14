@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [0003 Chrome-native interface](./0003-chrome-native-interface.md)
 
 ## Context
 

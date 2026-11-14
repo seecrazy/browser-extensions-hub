@@ -228,16 +228,6 @@ importers:
         version: 8.72.2(eslint@9.39.5(jiti@2.7.0))(typescript@5.6.3)
 
   packages/shared:
-    dependencies:
-      '@fontsource-variable/bricolage-grotesque':
-        specifier: 5.3.0
-        version: 5.3.0
-      '@fontsource-variable/martian-mono':
-        specifier: 5.3.0
-        version: 5.3.0
-      '@fontsource-variable/newsreader':
-        specifier: 5.3.0
-        version: 5.3.0
     devDependencies:
       '@hub/tsconfig':
         specifier: workspace:*
@@ -709,15 +699,6 @@ packages:
   '@fluent/syntax@0.19.0':
     resolution: {integrity: sha512-5D2qVpZrgpjtqU4eNOcWGp1gnUCgjfM+vKGE2y03kKN6z5EBhtx0qdRFbg8QuNNj8wXNoX93KJoYb+NqoxswmQ==}
     engines: {node: '>=14.0.0', npm: '>=7.0.0'}
-
-  '@fontsource-variable/bricolage-grotesque@5.3.0':
-    resolution: {integrity: sha512-TLi9Q4hJjS2UvoTMRSS2nHu6c4R56lAw60NR9QYtVRCHn0XtsFpiEhNffZ8Glsoxu6wEEwLKBP8lb94J52PNBA==}
-
-  '@fontsource-variable/martian-mono@5.3.0':
-    resolution: {integrity: sha512-0wVODx9ILwNnaYC4XCuSaFRYtj1Prd89MRVaSuv2ng6zLiQkS4SepaWEPefs7vqCZS8sbEOA8jb/4F5KNMnGdg==}
-
-  '@fontsource-variable/newsreader@5.3.0':
-    resolution: {integrity: sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw==}
 
   '@fregante/relaxed-json@2.0.0':
     resolution: {integrity: sha512-PyUXQWB42s4jBli435TDiYuVsadwRHnMc27YaLouINktvTWsL3FcKrRMGawTayFk46X+n5bE23RjUTWQwrukWw==}
@@ -3490,12 +3471,6 @@ snapshots:
       levn: 0.4.1
 
   '@fluent/syntax@0.19.0': {}
-
-  '@fontsource-variable/bricolage-grotesque@5.3.0': {}
-
-  '@fontsource-variable/martian-mono@5.3.0': {}
-
-  '@fontsource-variable/newsreader@5.3.0': {}
 
   '@fregante/relaxed-json@2.0.0': {}
 

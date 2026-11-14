@@ -53,3 +53,7 @@ pnpm test:coverage
 - Runtime-injected content scripts use `matches: []` to avoid broad host permissions.
 - Release publish jobs must download artifacts; do not rely on build job files.
 - Manifest validation discovers extension directories; no hardcoded plugin list is required.
+
+## UI alignment
+
+All plugin surfaces now use a shared Chrome-native light/dark design system. Core behavior is unchanged.

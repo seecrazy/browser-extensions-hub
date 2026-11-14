@@ -1,5 +1,6 @@
 import { createNamespacedStorage } from "@hub/shared/storage";
 import "@hub/shared/ui/styles.css";
+import "./style.css";
 import {
   addShortcut,
   addTodo,
