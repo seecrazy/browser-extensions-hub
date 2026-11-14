@@ -21,6 +21,34 @@ function safeOrigin(url: string | undefined): string | undefined {
   }
 }
 
+export function isInjectableUrl(url: string | undefined): boolean {
+  if (!url) {
+    return false;
+  }
+
+  try {
+    const protocol = new URL(url).protocol;
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export function getInjectionErrorMessage(error: unknown, url?: string): string {
+  const rawMessage = error instanceof Error ? error.message : String(error);
+
+  if (
+    !isInjectableUrl(url) ||
+    rawMessage.includes("Cannot access a chrome:// URL") ||
+    rawMessage.includes("cannot access contents of the page") ||
+    rawMessage.includes("Missing host permission")
+  ) {
+    return "This page type cannot be modified. Open an http or https website.";
+  }
+
+  return rawMessage;
+}
+
 export async function getActiveTab(): Promise<{
   tabId?: number;
   url?: string;
@@ -45,13 +73,17 @@ export async function injectRuntimeContentScript(
     throw new Error("No active tab available.");
   }
 
-  await chrome.scripting.executeScript({
-    target: {
-      tabId: activeTab.tabId,
-      allFrames: options.allFrames === true,
-    },
-    files: [options.file],
-  });
+  try {
+    await chrome.scripting.executeScript({
+      target: {
+        tabId: activeTab.tabId,
+        allFrames: options.allFrames === true,
+      },
+      files: [options.file],
+    });
+  } catch (error) {
+    throw new Error(getInjectionErrorMessage(error, activeTab.url));
+  }
 
   const result: InjectionResult = {
     tabId: activeTab.tabId,

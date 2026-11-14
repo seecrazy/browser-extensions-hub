@@ -1,3 +1,4 @@
+import { getActiveTab, getInjectionErrorMessage, isInjectableUrl } from "@hub/shared/injection";
 import { createNamespacedStorage } from "@hub/shared/storage";
 import "@hub/shared/ui/styles.css";
 import { browser } from "wxt/browser";
@@ -39,29 +40,31 @@ languageSelect?.addEventListener("change", async () => {
 });
 
 document.querySelector<HTMLButtonElement>("#activate")?.addEventListener("click", async () => {
-  const [tab] = await browser.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
+  const { tabId, url } = await getActiveTab();
 
-  if (!tab?.id) {
+  if (!tabId) {
     setStatus("No active tab available.", true);
+    return;
+  }
+
+  if (!isInjectableUrl(url)) {
+    setStatus(
+      "This page type cannot be translated. Open an http or https website, then activate.",
+      true,
+    );
     return;
   }
 
   try {
     await browser.scripting.executeScript({
       target: {
-        tabId: tab.id,
+        tabId,
       },
       files: ["/content-scripts/quick-translate.js"],
     });
     setStatus("Activated. Select text to translate.");
   } catch (error) {
-    setStatus(
-      error instanceof Error ? error.message : "This tab cannot use Quick Translate.",
-      true,
-    );
+    setStatus(getInjectionErrorMessage(error, url), true);
   }
 });
 

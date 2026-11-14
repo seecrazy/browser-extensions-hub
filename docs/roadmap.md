@@ -112,3 +112,4 @@
 - [x] Fix repeated runtime content-script injection lifecycle.
 - [x] Add tab-message connection retry.
 - [x] Add Dark Mode runtime integration test.
+- [x] Add friendly restricted-page injection errors.
