@@ -19,6 +19,8 @@ Run after `pnpm build` before tagging a release.
 - [ ] Enable on this tab works and expires after navigation.
 - [ ] Always on this site requests one-origin permission.
 - [ ] Approved site auto-injects after reload.
+- [ ] Approving site access also injects the currently open page.
+- [ ] Advanced settings button is visibly highlighted.
 - [ ] Disable on this site removes the permission and registered script.
 - [ ] Enable all sites asks for optional http/https permission once.
 - [ ] All-site mode injects on multiple sites without another prompt.

@@ -123,6 +123,18 @@ function renderSiteState(settings: TranslateSettings): void {
   setButton(disableAllButton, !ui.showDisableAll);
 }
 
+async function injectCurrentTab(): Promise<void> {
+  const tab = await getActiveTab();
+
+  if (tab.tabId === undefined) {
+    throw new Error("No active tab available.");
+  }
+
+  await injectRuntimeContentScript({
+    file: "/content-scripts/quick-translate.js",
+  });
+}
+
 async function loadState(): Promise<void> {
   const tab = await getActiveTab();
   currentOrigin = normalizeOrigin(tab.url);
@@ -215,6 +227,11 @@ siteToggleButton?.addEventListener("click", async () => {
     }
 
     await settingsStorage.patch(nextSettings);
+
+    if (ui.showEnableSite || (ui.allSites && !ui.disabledOnThisOrigin)) {
+      await injectCurrentTab();
+    }
+
     renderSiteState(nextSettings);
     statusView.set("Site access updated.");
   } catch (error) {
@@ -231,6 +248,7 @@ enableAllButton?.addEventListener("click", async () => {
     const settings = await settingsStorage.get();
     const nextSettings = await enableAllSitesAccess(settings);
     await settingsStorage.patch(nextSettings);
+    await injectCurrentTab();
     renderSiteState(nextSettings);
     statusView.set("Enabled on all sites.");
   } catch (error) {

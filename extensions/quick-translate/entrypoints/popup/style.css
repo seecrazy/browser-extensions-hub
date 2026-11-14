@@ -293,3 +293,100 @@ body {
 .hub-advanced-content .qt-button {
   width: 100%;
 }
+
+.qt-advanced-card {
+  position: relative;
+  padding: 0;
+  color: var(--hub-surface-ink);
+  background: var(--hub-surface);
+  border: 2px solid var(--hub-ink);
+  border-radius: var(--hub-radius);
+  box-shadow: var(--hub-shadow);
+  animation: hub-rise 520ms var(--hub-ease) both;
+}
+
+.qt-advanced-card[open] {
+  padding-bottom: 14px;
+}
+
+.qt-advanced-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  width: 100%;
+  padding: 14px;
+  cursor: pointer;
+  list-style: none;
+  background: linear-gradient(135deg, #ffe38f, #ffd166);
+  border: 0;
+  border-radius: var(--hub-radius);
+}
+
+.qt-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.qt-advanced-summary:hover {
+  background: linear-gradient(135deg, #ffefb8, #ffde77);
+}
+
+.qt-advanced-summary:focus-visible {
+  outline: 3px solid var(--hub-cobalt);
+  outline-offset: -4px;
+}
+
+.qt-advanced-title {
+  color: var(--hub-ink);
+  font-family: var(--hub-font-display);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.qt-advanced-subtitle {
+  grid-column: 1 / -1;
+  color: var(--hub-ink-soft);
+  font-family: var(--hub-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.qt-advanced-chevron {
+  grid-row: 1 / span 2;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: var(--hub-surface);
+  font-family: var(--hub-font-display);
+  font-size: 18px;
+  font-weight: 800;
+  background: var(--hub-ink);
+  border-radius: 999px;
+  transition: transform 220ms var(--hub-ease);
+}
+
+.qt-advanced-card[open] .qt-advanced-chevron {
+  transform: rotate(45deg);
+  background: var(--hub-signal);
+}
+
+.qt-advanced-card .hub-advanced-content {
+  margin: 0;
+  padding: 14px;
+  background: var(--hub-surface);
+  border-top: 2px solid var(--hub-ink);
+  border-radius: 0;
+  animation: none;
+}
+
+.qt-status {
+  min-height: 0;
+  margin: 10px 0 0;
+}
+
+.qt-status:empty {
+  display: none;
+  margin: 0;
+}
