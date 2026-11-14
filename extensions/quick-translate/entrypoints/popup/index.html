@@ -15,61 +15,61 @@
             <p>Select text, translate instantly</p>
           </div>
         </div>
-        <span id="all-sites-chip" class="qt-chip" hidden>All sites</span>
       </header>
 
-      <section class="qt-card">
+      <section class="qt-card qt-base">
         <div class="qt-row">
           <span class="qt-label">Current site</span>
           <strong id="origin" class="qt-origin">Unsupported page</strong>
         </div>
         <span id="site-state" class="qt-chip">Not enabled</span>
+        <button id="site-toggle" class="qt-button qt-button--primary" hidden>
+          <span id="site-toggle-label">Enable on this site</span>
+          <small id="site-toggle-note">asks once</small>
+        </button>
       </section>
 
-      <section class="qt-card">
-        <label class="qt-label" for="language">Translate into</label>
-        <select id="language" class="qt-select">
-          <option value="en">English</option>
-          <option value="zh-CN">Chinese (Simplified)</option>
-          <option value="zh-TW">Chinese (Traditional)</option>
-          <option value="ja">Japanese</option>
-          <option value="ko">Korean</option>
-          <option value="es">Spanish</option>
-          <option value="fr">French</option>
-          <option value="de">German</option>
-        </select>
-        <div id="advanced" class="hub-column"></div>
-        <p id="status" class="qt-status"></p>
-      </section>
+      <details id="advanced" class="hub-advanced">
+        <summary class="hub-advanced-summary">Advanced settings</summary>
+        <div class="hub-advanced-content">
+          <section>
+            <label class="qt-label" for="language">Translate into</label>
+            <select id="language" class="hub-select">
+              <option value="en">English</option>
+              <option value="zh-CN">Chinese (Simplified)</option>
+              <option value="zh-TW">Chinese (Traditional)</option>
+              <option value="ja">Japanese</option>
+              <option value="ko">Korean</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+              <option value="de">German</option>
+            </select>
+            <div id="advanced-timeout" class="hub-column"></div>
+          </section>
 
-      <section class="qt-card">
-        <h2>Page access</h2>
-        <div class="qt-actions">
-          <button id="activate" class="qt-button qt-button--primary">
-            <span>Enable this tab</span>
-            <small>activeTab</small>
-          </button>
-          <button id="enable-site" class="qt-button qt-button--secondary" hidden>
-            <span>Enable this site</span>
-            <small>asks once</small>
-          </button>
-          <button id="disable-site" class="qt-button qt-button--ghost" hidden>
-            <span>Disable this site</span>
-            <small>exception</small>
-          </button>
-          <button id="enable-all" class="qt-button qt-button--secondary" hidden>
-            <span>Enable all sites</span>
-            <small>asks once</small>
-          </button>
-          <button id="disable-all" class="qt-button qt-button--danger" hidden>
-            <span>Disable all sites</span>
-            <small>revoke</small>
-          </button>
+          <section>
+            <h2>Temporary access</h2>
+            <button id="activate" class="qt-button qt-button--secondary">
+              <span>Enable this tab</span>
+              <small>activeTab · expires on navigation</small>
+            </button>
+          </section>
+
+          <section>
+            <h2>All sites</h2>
+            <button id="enable-all" class="qt-button qt-button--secondary" hidden>
+              <span>Enable all sites</span>
+              <small>asks once</small>
+            </button>
+            <button id="disable-all" class="qt-button qt-button--danger" hidden>
+              <span>Disable all sites</span>
+              <small>revoke access</small>
+            </button>
+          </section>
         </div>
-        <p class="qt-note">
-          Permissions are requested only after you click. You can revoke access any time.
-        </p>
-      </section>
+      </details>
+
+      <p id="status" class="qt-status"></p>
     </main>
     <script type="module" src="./main.ts"></script>
   </body>

@@ -260,3 +260,36 @@ body {
     transition: none;
   }
 }
+
+.qt-base {
+  padding-bottom: 14px;
+}
+
+.qt-base .qt-chip {
+  margin: 10px 0 12px;
+}
+
+.qt-base .qt-button {
+  width: 100%;
+  min-height: 54px;
+}
+
+.qt-advanced-group + .qt-advanced-group,
+.hub-advanced-content section + section {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--hub-line-strong);
+}
+
+.hub-advanced-content h2 {
+  margin: 0 0 9px;
+  color: var(--hub-ink);
+  font-family: var(--hub-font-display);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.hub-advanced-content .qt-button {
+  width: 100%;
+}

@@ -14,6 +14,7 @@ import {
   isSitePermissionGranted,
   normalizeOrigin,
   reconcileRevokedSiteAccess,
+  setOriginDisabled,
 } from "../../lib/site-access";
 import { quickTranslateMessages } from "../../lib/messages";
 import { translateDefaults } from "../../lib/types";
@@ -22,11 +23,11 @@ import type { TranslateSettings } from "../../lib/types";
 const settingsStorage = createNamespacedStorage("quick-translate.settings", translateDefaults);
 const languageSelect = document.querySelector<HTMLSelectElement>("#language");
 const originLabel = document.querySelector<HTMLElement>("#origin");
-const allSitesChip = document.querySelector<HTMLSpanElement>("#all-sites-chip");
 const siteStateChip = document.querySelector<HTMLSpanElement>("#site-state");
+const siteToggleButton = document.querySelector<HTMLButtonElement>("#site-toggle");
+const siteToggleLabel = document.querySelector<HTMLElement>("#site-toggle-label");
+const siteToggleNote = document.querySelector<HTMLElement>("#site-toggle-note");
 const activateButton = document.querySelector<HTMLButtonElement>("#activate");
-const enableSiteButton = document.querySelector<HTMLButtonElement>("#enable-site");
-const disableSiteButton = document.querySelector<HTMLButtonElement>("#disable-site");
 const enableAllButton = document.querySelector<HTMLButtonElement>("#enable-all");
 const disableAllButton = document.querySelector<HTMLButtonElement>("#disable-all");
 const statusView = createStatusView(document.querySelector<HTMLParagraphElement>("#status"));
@@ -84,11 +85,13 @@ function renderSiteState(settings: TranslateSettings): void {
     originLabel.textContent = ui.origin || "Unsupported page";
   }
 
-  setChip(allSitesChip, "All-site access", "all", !ui.allSites);
-
   if (!ui.supported) {
     setChip(siteStateChip, "Unsupported page", "muted");
-  } else if (ui.disabledOnThisOrigin) {
+    setButton(siteToggleButton, true);
+    return;
+  }
+
+  if (ui.disabledOnThisOrigin) {
     setChip(siteStateChip, "Disabled on this site", "muted");
   } else if (ui.allSites) {
     setChip(siteStateChip, "Enabled via all sites", "active");
@@ -98,8 +101,24 @@ function renderSiteState(settings: TranslateSettings): void {
     setChip(siteStateChip, "Not enabled", "muted");
   }
 
-  setButton(enableSiteButton, !ui.showEnableSite);
-  setButton(disableSiteButton, !ui.showDisableSite);
+  setButton(siteToggleButton, false);
+
+  if (siteToggleLabel) {
+    siteToggleLabel.textContent = ui.showDisableSite
+      ? "Disable on this site"
+      : "Enable on this site";
+  }
+
+  if (siteToggleNote) {
+    siteToggleNote.textContent = ui.showDisableSite
+      ? ui.allSites
+        ? "exception"
+        : "revoke permission"
+      : ui.allSites && ui.disabledOnThisOrigin
+        ? "remove exception"
+        : "asks once";
+  }
+
   setButton(enableAllButton, !ui.showEnableAll);
   setButton(disableAllButton, !ui.showDisableAll);
 }
@@ -171,39 +190,39 @@ activateButton?.addEventListener("click", async () => {
   }
 });
 
-enableSiteButton?.addEventListener("click", async () => {
+siteToggleButton?.addEventListener("click", async () => {
   if (!currentOrigin) {
     statusView.set("Only http and https sites can be enabled.", true);
     return;
   }
 
-  try {
-    const settings = await settingsStorage.get();
-    const nextSettings = await enableSiteAccess(settings, currentOrigin);
-    await settingsStorage.patch(nextSettings);
-    renderSiteState(nextSettings);
-    statusView.set("Enabled for this site.");
-  } catch (error) {
-    statusView.set(
-      error instanceof Error ? error.message : "Site permission was not granted.",
-      true,
-    );
-  }
-});
-
-disableSiteButton?.addEventListener("click", async () => {
-  if (!currentOrigin) {
-    return;
-  }
+  siteToggleButton.disabled = true;
 
   try {
     const settings = await settingsStorage.get();
-    const nextSettings = await disableSiteAccess(settings, currentOrigin);
+    const ui = getSiteAccessUi(settings, currentOrigin);
+    let nextSettings: TranslateSettings;
+
+    if (ui.showDisableSite) {
+      nextSettings =
+        ui.allSites && !ui.disabledOnThisOrigin
+          ? setOriginDisabled(settings, currentOrigin, true)
+          : await disableSiteAccess(settings, currentOrigin);
+    } else if (ui.allSites && ui.disabledOnThisOrigin) {
+      nextSettings = setOriginDisabled(settings, currentOrigin, false);
+    } else {
+      nextSettings = await enableSiteAccess(settings, currentOrigin);
+    }
+
     await settingsStorage.patch(nextSettings);
     renderSiteState(nextSettings);
-    statusView.set("Disabled for this site.");
+    statusView.set("Site access updated.");
   } catch (error) {
-    statusView.set(error instanceof Error ? error.message : "Unable to disable this site.", true);
+    statusView.set(error instanceof Error ? error.message : "Unable to update site access.", true);
+  } finally {
+    if (siteToggleButton) {
+      siteToggleButton.disabled = false;
+    }
   }
 });
 

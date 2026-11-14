@@ -23,7 +23,7 @@ Translate user-selected text in an approved tab with a local bubble.
 
 ## Configuration
 
-Essential language and access controls are always visible. Request timeout is in **Advanced request settings**.
+The base popup only shows the current site and one site enable/disable control. Language, timeout, temporary tab access, and all-site access are behind **Advanced settings**.
 
 ## Data model
 

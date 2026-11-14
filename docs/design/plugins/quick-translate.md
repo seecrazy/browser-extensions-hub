@@ -62,3 +62,7 @@ Quick Translate supports three access modes:
 3. **All sites**: explicit optional access to `http://*/*` and `https://*/*`.
 
 All-site access can be revoked globally. A per-origin disable list overrides all-site mode. The popup is the consent surface; content scripts do not request permissions.
+
+## Iteration 7 refinement
+
+The popup shows only the current site and a single base toggle. Advanced settings contain language, timeout, temporary tab activation, and all-site controls. In all-site mode, the base toggle toggles a per-site exception instead of revoking global access.

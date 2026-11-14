@@ -26,6 +26,12 @@ Use a shared progressive-disclosure pattern:
 
 ## Applied surfaces
 
-- Quick Translate: request timeout.
+- Quick Translate: language, timeout, one-tab access, and all-site controls. Base surface only shows the current-site toggle.
 - Reading Progress: height, position, and offsets.
 - Clipboard History: retention window.
+
+## Refinement
+
+Quick Translate follows a stricter base-first model. Its base surface only shows the current site and a single site enable/disable control. Language, timeout, one-tab activation, all-site access, and revocation controls are grouped behind **Advanced settings**.
+
+For all-site mode, the base control becomes a per-site exception: it disables the current origin without revoking all-site access. Clicking it again removes the exception.

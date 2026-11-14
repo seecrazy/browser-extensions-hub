@@ -98,3 +98,4 @@
 - [x] Quick Translate advanced timeout
 - [x] Reading Progress advanced appearance
 - [x] Clipboard advanced retention
+- [x] Quick Translate base-first popup
