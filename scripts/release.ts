@@ -47,7 +47,7 @@ function parseReleaseOptions(): ReleaseOptions {
     },
   });
 
-  const plugin = values._?.[0];
+  const plugin = values.positionals?.[0];
 
   if (
     typeof plugin !== "string" ||
