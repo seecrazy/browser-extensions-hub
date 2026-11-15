@@ -3,7 +3,7 @@
 [![CI](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/codeql.yml/badge.svg)](https://github.com/seecrazy/browser-extensions-hub/actions/workflows/codeql.yml)
 
-A privacy-first browser-extension monorepo built with **pnpm workspaces**, **WXT**, and **TypeScript**. It contains one reusable template and ten independently buildable, independently releasable Manifest V3 plugins for Chrome and Firefox.
+A privacy-first browser-extension monorepo built with **pnpm workspaces**, **WXT**, and **TypeScript**. It contains one reusable template and eleven independently buildable, independently releasable Manifest V3 plugins for Chrome and Firefox.
 
 ## Highlights
 
@@ -31,6 +31,7 @@ A privacy-first browser-extension monorepo built with **pnpm workspaces**, **WXT
 | [Reading Progress](extensions/reading-progress/PLUGIN.md)         | Per-site progress bar with offset controls               | popup, runtime content script             | `activeTab`, `scripting`, `storage`                        |
 | [Clipboard History](extensions/clipboard-history-lite/PLUGIN.md)  | Last 50 explicit copies with per-site controls           | popup, runtime content script             | `activeTab`, `scripting`, `storage`, `clipboardWrite`      |
 | [Screenshot Annotator](extensions/screenshot-annotator/PLUGIN.md) | Local capture plus rectangle/arrow/text/brush annotation | popup, annotate, background               | `activeTab`, `storage`, `clipboardWrite`                   |
+| [Font Switcher](extensions/font-switcher/PLUGIN.md)               | Local Kai, Xingkai, Song, Hei, or FangSong page fonts    | popup, options, runtime content script    | `activeTab`, `scripting`, `storage`                        |
 
 Each plugin has a local `PLUGIN.md` with scope, permissions, constraints, and QA references.
 
@@ -255,7 +256,7 @@ manual checklist remains in
 
 ### Done
 
-- Ten plugins covering NTP, content scripts, background workers, options pages, DNR, media, clipboard, and canvas workflows.
+- Eleven plugins covering NTP, content scripts, background workers, options pages, DNR, media, clipboard, canvas, and local system-font workflows.
 - Chrome MV3 and Firefox MV3 builds.
 - Shared messaging, storage, injection, and UI helpers.
 - Unit tests, coverage, lint, format, Firefox lint, dependency audit, and dependency review.

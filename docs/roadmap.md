@@ -116,3 +116,4 @@
 - [x] Add one-command release orchestration.
 - [x] Generate Chrome store screenshots and promo images.
 - [x] Generate Chrome privacy-practices disclosures.
+- [x] Font Switcher with local system fonts.

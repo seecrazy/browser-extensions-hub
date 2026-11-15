@@ -145,6 +145,17 @@ def draw_screenshot_annotator() -> None:
     save(image, "screenshot-annotator")
 
 
+def draw_font_switcher() -> None:
+    image, draw = base((79, 70, 229, 255))
+    draw.rounded_rectangle((68, 116, 244, 396), radius=38, fill=(238, 242, 255, 255))
+    draw.rounded_rectangle((268, 116, 444, 396), radius=38, fill=(255, 255, 255, 255))
+    draw.text((156, 208), "A", font=font(128), anchor="mm", fill=(79, 70, 229, 255))
+    draw.text((156, 312), "a", font=font(84), anchor="mm", fill=(129, 140, 248, 255))
+    draw.text((356, 248), "永", font=font(104), anchor="mm", fill=(79, 70, 229, 255))
+    draw.text((356, 334), "字", font=font(72), anchor="mm", fill=(129, 140, 248, 255))
+    save(image, "font-switcher")
+
+
 def main() -> None:
     draw_template()
     draw_dark_mode()
@@ -157,6 +168,7 @@ def main() -> None:
     draw_reading_progress()
     draw_clipboard_history()
     draw_screenshot_annotator()
+    draw_font_switcher()
 
 
 if __name__ == "__main__":

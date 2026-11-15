@@ -44,6 +44,7 @@ browser-extensions-hub/
 │   ├── volume-booster/
 │   ├── quick-translate/
 │   └── focus-lock/
+│   ├── font-switcher/
 ├── scripts/
 │   ├── validate-manifests.ts
 │   └── validate-release-tag.ts
@@ -91,6 +92,7 @@ packages:
 | `extensions/volume-booster`  | `@hub/volume-booster`  | `volume-booster@0.1.0`  |
 | `extensions/quick-translate` | `@hub/quick-translate` | `quick-translate@0.1.0` |
 | `extensions/focus-lock`      | `@hub/focus-lock`      | `focus-lock@0.1.0`      |
+| `extensions/font-switcher`   | `@hub/font-switcher`   | `font-switcher@0.1.0`   |
 
 tag 中的插件名等于目录名，不包含 `@hub/` scope。
 
@@ -552,6 +554,7 @@ type FocusLockSettings = {
 | volume-booster  | `volume-booster.settings`  | local |
 | quick-translate | `quick-translate.settings` | local |
 | focus-lock      | `focus-lock.settings`      | local |
+| font-switcher   | `font-switcher.settings`   | local |
 
 ### 错误处理
 

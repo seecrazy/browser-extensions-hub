@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Font Switcher Lite — Settings</title>
+  </head>
+  <body>
+    <main class="hub-page hub-page-wide">
+      <h1 class="hub-title">Font Switcher Lite settings</h1>
+      <div class="hub-card">
+        <label class="hub-label" for="default-font">Default font for new pages</label>
+        <select id="default-font" class="hub-select">
+          <option value="kaiti">楷体 Kai</option>
+          <option value="xingkai">行楷 Xingkai</option>
+          <option value="songti">宋体 Song</option>
+          <option value="heiti">黑体 Hei</option>
+          <option value="fangti">仿宋 FangSong</option>
+        </select>
+        <p class="hub-label">
+          Selecting a font in the popup activates the current tab only. New tabs require popup
+          activation.
+        </p>
+        <p id="status" class="hub-status"></p>
+      </div>
+      <div class="hub-card">
+        <h2 class="hub-title">Local font availability</h2>
+        <ul id="availability" class="hub-list"></ul>
+        <button id="clear" type="button" class="hub-button hub-button-danger">
+          Clear local preferences
+        </button>
+      </div>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

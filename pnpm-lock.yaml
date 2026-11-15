@@ -109,6 +109,22 @@ importers:
         specifier: 0.20.0
         version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
 
+  extensions/font-switcher:
+    dependencies:
+      '@hub/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      '@hub/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      typescript:
+        specifier: 5.6.3
+        version: 5.6.3
+      wxt:
+        specifier: 0.20.0
+        version: 0.20.0(@types/node@26.6.6)(jiti@2.7.0)(rollup@4.68.3)(tsx@4.19.2)
+
   extensions/newtab-dashboard:
     dependencies:
       '@hub/shared':

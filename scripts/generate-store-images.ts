@@ -207,6 +207,18 @@ const visuals: Record<string, PluginVisual> = {
       </div>
     `,
   },
+  "font-switcher": {
+    color: "#4338ca",
+    accent: "#818cf8",
+    bullets: ["Local system fonts", "Instant preview", "No font downloads"],
+    content: `
+      <div class="surface fonts">
+        <div class="font-card"><span class="glyph" style="font-family:'Kaiti SC','KaiTi',serif">永</span><span>楷体</span></div>
+        <div class="font-card"><span class="glyph" style="font-family:'SimSun','Songti SC',serif">永</span><span>宋体</span></div>
+        <div class="font-card"><span class="glyph" style="font-family:'PingFang SC','Microsoft YaHei',sans-serif">永</span><span>黑体</span></div>
+      </div>
+    `,
+  },
 };
 
 function baseStyles(): string {
@@ -285,6 +297,10 @@ function baseStyles(): string {
       .toolbar { height:3vw; display:flex; align-items:center; gap:1vw; }
       .tool { width:1.6vw; height:1.6vw; border-radius:6px; background:#dadce0; }
       .tool.on { background:#db2777; }
+      .fonts { width:60%; height:68%; padding:2.5%; display:grid; grid-template-columns:repeat(3,1fr); gap:1.4vw; }
+      .font-card { background:#fff; border:1px solid #e5eaf0; border-radius:12px; display:grid;
+        place-items:center; align-content:center; gap:.9vw; font-size:.85vw; color:#30343a; }
+      .glyph { font-size:3.6vw; line-height:1; color:#4f46e5; }
       .ribbon { position:absolute; left:4%; right:4%; bottom:2%; height:8%; display:flex;
         align-items:center; justify-content:space-between; padding:0 2%; background:rgba(255,255,255,.82);
         border:1px solid rgba(255,255,255,.7); border-radius:99px; box-shadow:0 12px 30px rgba(15,23,42,.12); }

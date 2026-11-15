@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Font Switcher Lite</title>
+  </head>
+  <body>
+    <main class="font-switcher">
+      <header class="header">
+        <h1>Font Switcher</h1>
+        <button id="options" type="button" aria-label="Settings">⚙</button>
+      </header>
+      <section class="preview">
+        <p id="preview-large" class="preview-large">永和九年，岁在癸丑</p>
+        <p id="preview-small" class="preview-small">The quick brown fox 0123</p>
+      </section>
+      <p id="site" class="site-label">Current site</p>
+      <div id="font-list" class="font-list"></div>
+      <button id="reset" type="button" class="reset-button">Use page default</button>
+      <p id="status" class="hub-status"></p>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
