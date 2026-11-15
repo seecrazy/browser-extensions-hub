@@ -29,7 +29,7 @@ A privacy-first browser-extension monorepo built with **pnpm workspaces**, **WXT
 | [New Tab Dashboard](extensions/newtab-dashboard/PLUGIN.md)        | Local time, todos, shortcuts; no search override         | newtab, background                        | `storage`                                                  |
 | [Privacy Cleaner](extensions/privacy-cleaner/PLUGIN.md)           | Manual per-origin storage cleanup                        | popup, background, options                | `activeTab`, `browsingData`, `storage`                     |
 | [Reading Progress](extensions/reading-progress/PLUGIN.md)         | Per-site progress bar with offset controls               | popup, runtime content script             | `activeTab`, `scripting`, `storage`                        |
-| [Clipboard History](extensions/clipboard-history-lite/PLUGIN.md)  | Last 50 explicit copies with expiry and site controls    | popup, runtime content script             | `activeTab`, `scripting`, `storage`, `clipboardWrite`      |
+| [Clipboard History](extensions/clipboard-history-lite/PLUGIN.md)  | Last 50 explicit copies with per-site controls           | popup, runtime content script             | `activeTab`, `scripting`, `storage`, `clipboardWrite`      |
 | [Screenshot Annotator](extensions/screenshot-annotator/PLUGIN.md) | Local capture plus rectangle/arrow/text/brush annotation | popup, annotate, background               | `activeTab`, `storage`, `clipboardWrite`                   |
 
 Each plugin has a local `PLUGIN.md` with scope, permissions, constraints, and QA references.
@@ -169,18 +169,67 @@ Manifest validation discovers plugin directories automatically.
 
 ## Release
 
-Tag format:
+### One-command release candidate
+
+After updating the plugin version and committing all changes:
+
+```text
+pnpm release <plugin>
+```
+
+This single command requires a clean Git tree, runs the release quality gates,
+builds only the selected plugin, validates Chrome/Firefox output, packs Chrome,
+Firefox, and Firefox source archives, and generates `SHA256SUMS`.
+
+Artifacts are written to:
+
+```text
+release/<plugin>/<version>/
+```
+
+While real store screenshots are pending, use the same allowance as CI:
+
+```bash
+pnpm release <plugin> --allow-incomplete
+```
+
+### Direct store submission
+
+With local Chrome and AMO credentials configured:
+
+```bash
+pnpm release <plugin> --publish
+```
+
+Limit submission to one store:
+
+```bash
+pnpm release <plugin> --publish --skip-firefox
+pnpm release <plugin> --publish --skip-chrome
+```
+
+This mode is explicit and final: it uploads and publishes Chrome and submits
+Firefox on the listed AMO channel. Store credentials are never written to the
+repository.
+
+### Canonical tag-driven release
+
+Create the validated release tag and push it to trigger GitHub Actions:
+
+```bash
+pnpm release <plugin> --push
+```
+
+The tag format is:
 
 ```text
 <plugin-name>@<version>
 ```
 
-Example:
+For example:
 
 ```bash
-pnpm validate:release-tag dark-mode-lite@0.1.0
-git tag dark-mode-lite@0.1.0
-git push origin dark-mode-lite@0.1.0
+pnpm release dark-mode-lite --push
 ```
 
 The release workflow:
@@ -198,7 +247,10 @@ Publish jobs use protected GitHub environments:
 - `chrome-publish`
 - `firefox-publish`
 
-See [`docs/operations/release-checklist.md`](docs/operations/release-checklist.md).
+Full credential names and the complete flow are documented in
+[`docs/operations/local-release.md`](docs/operations/local-release.md). The
+manual checklist remains in
+[`docs/operations/release-checklist.md`](docs/operations/release-checklist.md).
 
 ## Current status
 
