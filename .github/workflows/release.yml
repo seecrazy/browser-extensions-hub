@@ -77,16 +77,16 @@ jobs:
           node --experimental-strip-types scripts/validate-manifests.ts --plugin "$PLUGIN" --browser firefox
 
       - name: Lint Firefox build
-        run: pnpm exec web-ext lint --source-dir "extensions//dist/firefox-mv3"
+        run: pnpm exec web-ext lint --source-dir "extensions/${PLUGIN}/dist/firefox-mv3"
 
       - name: Pack Chrome artifact
         run: |
           mkdir -p release
-          (cd "extensions//dist/chrome-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-chrome-mv3.zip" .)
+          (cd "extensions/${PLUGIN}/dist/chrome-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-chrome-mv3.zip" .)
 
       - name: Pack Firefox artifact
         run: |
-          (cd "extensions//dist/firefox-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-firefox-mv3.zip" .)
+          (cd "extensions/${PLUGIN}/dist/firefox-mv3" && zip -r "../../../release/${PLUGIN}-${VERSION}-firefox-mv3.zip" .)
 
       - name: Pack Firefox source artifact
         run: |
@@ -153,6 +153,11 @@ jobs:
           VOLUME_BOOSTER_CHROME_EXTENSION_ID: ${{ secrets.VOLUME_BOOSTER_CHROME_EXTENSION_ID }}
           QUICK_TRANSLATE_CHROME_EXTENSION_ID: ${{ secrets.QUICK_TRANSLATE_CHROME_EXTENSION_ID }}
           FOCUS_LOCK_CHROME_EXTENSION_ID: ${{ secrets.FOCUS_LOCK_CHROME_EXTENSION_ID }}
+          CLIPBOARD_HISTORY_LITE_CHROME_EXTENSION_ID: ${{ secrets.CLIPBOARD_HISTORY_LITE_CHROME_EXTENSION_ID }}
+          NEWTAB_DASHBOARD_CHROME_EXTENSION_ID: ${{ secrets.NEWTAB_DASHBOARD_CHROME_EXTENSION_ID }}
+          PRIVACY_CLEANER_CHROME_EXTENSION_ID: ${{ secrets.PRIVACY_CLEANER_CHROME_EXTENSION_ID }}
+          READING_PROGRESS_CHROME_EXTENSION_ID: ${{ secrets.READING_PROGRESS_CHROME_EXTENSION_ID }}
+          SCREENSHOT_ANNOTATOR_CHROME_EXTENSION_ID: ${{ secrets.SCREENSHOT_ANNOTATOR_CHROME_EXTENSION_ID }}
         run: |
           plugin="${PLUGIN^^}"
           plugin="${plugin//-/_}"
@@ -172,11 +177,12 @@ jobs:
           CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
           EXTENSION_ID: ${{ steps.chrome.outputs.extension_id }}
         run: |
-          pnpm exec chrome-webstore-upload-cli upload \
+          pnpm exec chrome-webstore-upload upload \
             --source "release/${PLUGIN}-${VERSION}-chrome-mv3.zip" \
-            --no-auto-publish
+            --extension-id "$EXTENSION_ID"
 
   publish-firefox:
     runs-on: ubuntu-latest

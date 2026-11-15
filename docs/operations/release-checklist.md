@@ -5,15 +5,11 @@
 3. Run:
 
    ```bash
-   pnpm install --frozen-lockfile
-   pnpm build
-   pnpm typecheck
-   pnpm lint
-   pnpm format:check
-   pnpm test
-   pnpm validate:manifests
-   pnpm audit --prod
+   pnpm release <plugin>
    ```
+
+   This runs the checks, builds and validates the selected plugin, and creates
+   local release artifacts under `release/<plugin>/<version>`.
 
 4. Load Chrome and Firefox builds manually.
 5. Complete `docs/qa/<plugin>.md`.
@@ -25,16 +21,21 @@
 11. Validate the tag locally:
 
     ```bash
-    pnpm validate:release-tag <plugin>@<version>
+    pnpm release <plugin> --push
     ```
 
-12. Push the tag:
+Or create the tag and push it manually:
 
     ```bash
-    git tag <plugin>@<version>
-    git push origin <plugin>@<version>
-    ```
+
+pnpm release <plugin> --tag
+git push origin <plugin>@<version>
+
+````
+ git push origin <plugin>@<version>
+ ```
 
 13. Confirm workflow artifacts and GitHub Release.
 14. If Chrome was uploaded as a draft, manually review and publish it.
 15. Verify the signed Firefox xpi when AMO credentials are configured.
+````

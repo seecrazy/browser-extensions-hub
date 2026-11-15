@@ -24,6 +24,7 @@
     "validate:manifests": "node --experimental-strip-types scripts/validate-manifests.ts",
     "validate:release-tag": "node --experimental-strip-types scripts/validate-release-tag.ts",
     "format:check": "prettier --check .",
+    "release": "node --experimental-strip-types scripts/release.ts",
     "audit": "pnpm audit --prod",
     "validate:store-readiness": "node --experimental-strip-types scripts/validate-store-readiness.ts",
     "test:coverage": "vitest run --coverage",

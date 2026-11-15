@@ -235,6 +235,7 @@ See [`docs/operations/release-checklist.md`](docs/operations/release-checklist.m
 
 ## Documentation
 
+- Release: [`docs/operations/local-release.md`](docs/operations/local-release.md)
 - Design: [`docs/design/browser-extensions-hub.md`](docs/design/browser-extensions-hub.md)
 - ADRs: [`docs/design/adr`](docs/design/adr)
 - Roadmap: [`docs/roadmap.md`](docs/roadmap.md)
