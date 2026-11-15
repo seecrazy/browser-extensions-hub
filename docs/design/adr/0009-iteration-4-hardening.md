@@ -6,7 +6,9 @@ Accepted
 
 ## Context
 
-Ten plugins now cover the intended API scenarios. The remaining risk is not breadth but shared-layer correctness, release readiness, browser-level verification, and UX consistency.
+Eleven plugins now cover the intended API scenarios. The remaining risk is not
+breadth but shared-layer correctness, release readiness, browser-level
+verification, and UX consistency.
 
 ## Decision
 

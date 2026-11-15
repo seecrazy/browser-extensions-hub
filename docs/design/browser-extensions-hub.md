@@ -188,7 +188,7 @@ const storage = createNamespacedStorage<DarkModeSettings>("dark-mode-lite.settin
 | `entrypoints/blocked/index.html` | 独立扩展页面 `/blocked.html`         |
 | `entrypoints/<name>.content.ts`  | content script 或 runtime 可注入脚本 |
 
-需要用户显式激活的插件不默认申请 `<all_urls>`。`dark-mode-lite`、`volume-booster`、`quick-translate` 的 content script 使用 runtime 注入，由 popup 在当前 tab 上通过 `activeTab + scripting` 注入。
+需要用户显式激活的插件不默认申请 `<all_urls>`。`dark-mode-lite`、`volume-booster`、`quick-translate`、`font-switcher` 的 content script 使用 runtime 注入，由 popup 在当前 tab 上通过 `activeTab + scripting` 注入。
 
 每个插件 package 必须有：
 

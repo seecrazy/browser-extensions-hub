@@ -31,3 +31,8 @@ policy and increases Chrome Web Store review risk.
   silent all-site access.
 - Rendering depends on locally installed system fonts; unavailable styles fall
   back instead of being downloaded.
+
+## Release mapping
+
+Chrome release automation resolves the extension id from
+`FONT_SWITCHER_CHROME_EXTENSION_ID`.
