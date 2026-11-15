@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { loadChromeStoreMetadata } from "./lib/store-metadata";
+import { loadChromeStoreMetadata } from "./lib/store-metadata.ts";
 
 type ReleaseOptions = {
   plugin: string;
