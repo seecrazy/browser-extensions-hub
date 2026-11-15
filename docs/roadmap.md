@@ -115,3 +115,4 @@
 - [x] Add friendly restricted-page injection errors.
 - [x] Add one-command release orchestration.
 - [x] Generate Chrome store screenshots and promo images.
+- [x] Generate Chrome privacy-practices disclosures.

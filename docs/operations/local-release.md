@@ -35,7 +35,7 @@ release/<plugin>/<version>/
 The generated submission files contain:
 
 - `store-metadata.json`: machine-readable Chrome listing, permissions, compliance fields, and open dashboard items.
-- `chrome-store-submission.md`: copy-ready name, short description, detailed description, permission justification, privacy summary, and a checklist for dashboard-only fields such as category and screenshots.
+- `chrome-store-submission.md`: copy-ready name, short description, detailed description, single purpose, permission and host-permission justifications, privacy summary, and a checklist for dashboard-only fields such as category and screenshots.
 
 Generate or refresh store assets before release:
 

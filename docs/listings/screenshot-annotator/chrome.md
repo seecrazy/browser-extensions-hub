@@ -12,6 +12,12 @@ Capture, annotate, copy, or download a local screenshot.
 
 Screenshot Annotator Lite captures the visible area of the current tab only when you click capture. Annotate rectangles, arrows, and text, then copy or download the result. Screenshots remain on your device.
 
-## Permission justification
+## Single purpose
 
-activeTab lets you capture the visible area after clicking the popup. clipboardWrite lets you copy the annotated image. storage keeps tool preferences and the temporary capture for the current session.
+Capture and annotate the visible area of the current tab locally.
+
+## Permission justifications
+
+- `activeTab`: activeTab lets captureVisibleTab capture the current visible tab only after the user clicks Capture.
+- `storage`: storage keeps tool preferences and temporary capture data for the current session.
+- `clipboardWrite`: clipboardWrite copies the annotated image to the clipboard when the user requests it.

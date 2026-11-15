@@ -12,6 +12,12 @@ Turn the current site dark with one click.
 
 Dark Mode Lite applies a lightweight CSS filter to the site you are viewing. It keeps per-site preferences locally, lets you tune strength, and uses no broad host permissions. When you reload a page, reopen the popup to restore the setting.
 
-## Permission justification
+## Single purpose
 
-activeTab and scripting let the extension apply CSS only after you click its popup. storage keeps your per-site dark mode preference locally.
+Apply a local dark-mode filter to websites with per-site preferences.
+
+## Permission justifications
+
+- `activeTab`: activeTab grants access only after the user opens the extension popup.
+- `scripting`: scripting injects the content script that applies the user's dark-mode CSS to the current tab.
+- `storage`: storage keeps per-site enabled and strength settings on this device.

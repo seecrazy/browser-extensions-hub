@@ -13,7 +13,7 @@ export type ChromeStoreMetadata = {
     name: string;
     summary: string;
     description: string;
-    permissionJustification: string;
+    permissionJustifications: Record<string, string>;
     category: string | null;
     language: string;
     screenshotPaths: string[];
@@ -48,7 +48,8 @@ export type ChromeListing = {
   name: string;
   summary: string;
   description: string;
-  permissionJustification: string;
+  singlePurpose: string;
+  permissionJustifications: Record<string, string>;
 };
 
 function parseSections(markdown: string): Map<string, string> {
@@ -93,12 +94,25 @@ function requireSection(sections: Map<string, string>, heading: string): string 
 
 export function parseChromeListing(markdown: string): ChromeListing {
   const sections = parseSections(markdown);
+  const justificationSection = requireSection(sections, "Permission justifications");
+  const permissionJustifications: Record<string, string> = {};
+
+  for (const line of justificationSection.split(/\r?\n/)) {
+    const match = /^-\s+`([^`]+)`:\s+(.+)$/.exec(line.trim());
+
+    if (!match) {
+      throw new Error("Permission justifications must use: - `permission`: reason");
+    }
+
+    permissionJustifications[match[1]] = match[2];
+  }
 
   return {
     name: requireSection(sections, "Name"),
     summary: requireSection(sections, "Short description"),
     description: requireSection(sections, "Detailed description"),
-    permissionJustification: requireSection(sections, "Permission justification"),
+    singlePurpose: requireSection(sections, "Single purpose"),
+    permissionJustifications,
   };
 }
 
@@ -136,6 +150,20 @@ export function buildChromeStoreMetadata(input: {
 
   const privacySummary = parseBullets(input.privacyMarkdown);
 
+  const requiredPermissions = [
+    ...(input.manifest.permissions ?? []),
+    ...(input.manifest.host_permissions ?? []),
+  ];
+  const missingJustifications = requiredPermissions.filter(
+    (permission) => !input.listing.permissionJustifications[permission],
+  );
+
+  if (missingJustifications.length > 0) {
+    throw new Error(
+      `Missing Chrome permission justifications for: ${missingJustifications.join(", ")}`,
+    );
+  }
+
   if (privacySummary.length === 0) {
     throw new Error("Privacy listing must contain bullet points.");
   }
@@ -161,7 +189,7 @@ export function buildChromeStoreMetadata(input: {
       name: input.listing.name,
       summary: input.listing.summary,
       description: input.listing.description,
-      permissionJustification: input.listing.permissionJustification,
+      permissionJustifications: input.listing.permissionJustifications,
       category: null,
       language: "en",
       screenshotPaths: input.screenshotPaths ?? [],
@@ -174,7 +202,7 @@ export function buildChromeStoreMetadata(input: {
       homepageUrl: null,
     },
     compliance: {
-      singlePurpose: input.listing.summary,
+      singlePurpose: input.listing.singlePurpose,
       remoteCode: false,
       ads: false,
       analytics: false,
@@ -215,9 +243,23 @@ export function createChromeSubmissionReport(
     "",
     metadata.listing.description,
     "",
-    "### Permission justification",
+    "## Privacy practices tab",
     "",
-    metadata.listing.permissionJustification,
+    "### Single purpose",
+    "",
+    metadata.compliance.singlePurpose,
+    "",
+    "### Permission justifications",
+    "",
+    ...Object.entries(metadata.listing.permissionJustifications).map(
+      ([permission, reason]) => `- ${permission}: ${reason}`,
+    ),
+    "",
+    "### Data-use confirmation",
+    "",
+    ...metadata.privacySummary.map((line) => `- ${line}`),
+    "",
+    "Certify in the Chrome dashboard that the disclosures below match the plugin's implementation and the privacy summary above.",
     "",
     "## Privacy summary",
     "",

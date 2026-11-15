@@ -19,16 +19,21 @@ describe("Chrome store metadata", () => {
         "",
         "A longer description.",
         "",
-        "## Permission justification",
+        "## Single purpose",
         "",
-        "storage keeps local settings.",
+        "Translate selected text.",
+        "",
+        "## Permission justifications",
+        "",
+        "- `storage`: storage keeps local settings.",
       ].join("\n"),
     );
 
     expect(listing.name).toBe("Example Lite");
     expect(listing.summary).toBe("A concise summary.");
     expect(listing.description).toBe("A longer description.");
-    expect(listing.permissionJustification).toBe("storage keeps local settings.");
+    expect(listing.singlePurpose).toBe("Translate selected text.");
+    expect(listing.permissionJustifications.storage).toBe("storage keeps local settings.");
   });
 
   it("builds copyable submission metadata and identifies dashboard-only fields", () => {
@@ -40,7 +45,10 @@ describe("Chrome store metadata", () => {
         name: "Example Lite",
         summary: "A concise summary.",
         description: "A longer description.",
-        permissionJustification: "storage keeps local settings.",
+        singlePurpose: "Translate selected text.",
+        permissionJustifications: {
+          storage: "storage keeps local settings.",
+        },
       },
       privacyMarkdown: "# Privacy\n\n- Runs locally.\n- No analytics.\n",
       permissionsMarkdown: "# Permissions\n\nstorage keeps local settings.",
@@ -59,7 +67,7 @@ describe("Chrome store metadata", () => {
       summary: "A concise summary.",
       description: "A longer description.",
     });
-    expect(metadata.compliance.singlePurpose).toBe("A concise summary.");
+    expect(metadata.compliance.singlePurpose).toBe("Translate selected text.");
     expect(metadata.listing.screenshotPaths).toEqual(["images/screenshots/main-1280x800.png"]);
     expect(metadata.openItems).not.toContain("Add the required store screenshots.");
   });
@@ -74,7 +82,10 @@ describe("Chrome store metadata", () => {
           name: "Example Lite",
           summary: "A concise summary.",
           description: "A longer description.",
-          permissionJustification: "storage keeps local settings.",
+          singlePurpose: "Translate selected text.",
+          permissionJustifications: {
+            storage: "storage keeps local settings.",
+          },
         },
         privacyMarkdown: "- Runs locally.\n",
         permissionsMarkdown: "storage keeps local settings.",
