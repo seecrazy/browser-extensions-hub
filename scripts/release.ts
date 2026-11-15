@@ -35,7 +35,7 @@ function printUsage(): never {
 }
 
 function parseReleaseOptions(): ReleaseOptions {
-  const { values } = parseArgs({
+  const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
       tag: { type: "boolean", default: false },
@@ -47,7 +47,7 @@ function parseReleaseOptions(): ReleaseOptions {
     },
   });
 
-  const plugin = values.positionals?.[0];
+  const plugin = positionals?.[0];
 
   if (
     typeof plugin !== "string" ||
