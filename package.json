@@ -27,6 +27,7 @@
     "release": "node --experimental-strip-types scripts/release.ts",
     "audit": "pnpm audit --prod",
     "validate:store-readiness": "node --experimental-strip-types scripts/validate-store-readiness.ts",
+    "generate:store-images": "node --experimental-strip-types scripts/generate-store-images.ts",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium"

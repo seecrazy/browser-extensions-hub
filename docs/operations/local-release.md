@@ -37,6 +37,21 @@ The generated submission files contain:
 - `store-metadata.json`: machine-readable Chrome listing, permissions, compliance fields, and open dashboard items.
 - `chrome-store-submission.md`: copy-ready name, short description, detailed description, permission justification, privacy summary, and a checklist for dashboard-only fields such as category and screenshots.
 
+Generate or refresh store assets before release:
+
+```bash
+pnpm generate:store-images <plugin>
+```
+
+This produces the Chrome Web Store image sizes:
+
+| Asset                   | Size     | Output                                     |
+| ----------------------- | -------- | ------------------------------------------ |
+| Main screenshot         | 1280×800 | `images/screenshots/main-1280x800.png`     |
+| Secondary screenshot    | 640×400  | `images/screenshots/secondary-640x400.png` |
+| Small promo tile        | 440×280  | `images/promo/small-440x280.png`           |
+| Marquee/top promo image | 1400×560 | `images/promo/marquee-1400x560.png`        |
+
 While store screenshots are incomplete, release candidates use the same
 allowance as CI automatically.
 

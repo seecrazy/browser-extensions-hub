@@ -22,6 +22,8 @@ Chrome Web Store CLI binary name.
   warning used by CI while real screenshots remain pending.
 - Release packaging generates Chrome Web Store metadata and a copy-ready
   submission report from the source-of-truth listing documents.
+- A Playwright image generator creates the standard listing screenshots and
+  promotional tiles, and store readiness validates their dimensions and sizes.
 - `--publish` performs explicit direct store submission from local credentials.
   It can be limited with `--skip-chrome` or `--skip-firefox`.
 - Direct submission enforces a complete listing unless `--allow-incomplete` is
@@ -39,6 +41,8 @@ Chrome Web Store CLI binary name.
   final direct submission cannot silently bypass listing completeness.
 - Chrome dashboard-only fields remain explicit open items instead of being
   fabricated from generic defaults.
+- Generated listing images are versioned with listing documents so a release
+  can be reproduced without depending on a manual screenshot session.
 - Direct store submission is explicit and cannot accidentally push code.
 - Tag-push publishing remains the canonical reproducible CI flow.
 - Chrome Web Store submissions use the actual `chrome-webstore-upload` binary

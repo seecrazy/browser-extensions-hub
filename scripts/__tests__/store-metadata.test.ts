@@ -50,6 +50,8 @@ describe("Chrome store metadata", () => {
         host_permissions: [],
         icons: {},
       },
+      screenshotPaths: ["images/screenshots/main-1280x800.png"],
+      promoImages: { small: "images/promo/small-440x280.png", marquee: null },
     });
 
     expect(metadata.listing).toMatchObject({
@@ -58,7 +60,8 @@ describe("Chrome store metadata", () => {
       description: "A longer description.",
     });
     expect(metadata.compliance.singlePurpose).toBe("A concise summary.");
-    expect(metadata.openItems).toContain("Add the required store screenshots.");
+    expect(metadata.listing.screenshotPaths).toEqual(["images/screenshots/main-1280x800.png"]);
+    expect(metadata.openItems).not.toContain("Add the required store screenshots.");
   });
 
   it("rejects package and manifest version mismatches", () => {

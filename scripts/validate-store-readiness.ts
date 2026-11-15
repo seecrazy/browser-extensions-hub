@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
@@ -235,6 +235,39 @@ function validateStoreReadiness(
   if (!existsSync(pluginDocPath)) errors.push("PLUGIN.md is missing");
   if (!existsSync(qaDocPath)) errors.push("docs/qa/<plugin>.md is missing");
 
+  const requiredImages: Array<[string, number, number]> = [
+    ["images/screenshots/main-1280x800.png", 1280, 800],
+    ["images/screenshots/secondary-640x400.png", 640, 400],
+    ["images/promo/small-440x280.png", 440, 280],
+    ["images/promo/marquee-1400x560.png", 1400, 560],
+  ];
+
+  for (const [relativePath, width, height] of requiredImages) {
+    const imagePath = path.join(listingDir, relativePath);
+
+    if (!existsSync(imagePath)) {
+      errors.push(`store image is missing: docs/listings/${plugin}/${relativePath}`);
+      continue;
+    }
+
+    if (statSync(imagePath).size > 1024 * 1024) {
+      errors.push(`store image exceeds 1 MB: docs/listings/${plugin}/${relativePath}`);
+      continue;
+    }
+
+    try {
+      const dimensions = pngSize(imagePath);
+
+      if (dimensions.width !== width || dimensions.height !== height) {
+        errors.push(
+          `store image ${relativePath} is ${dimensions.width}x${dimensions.height}; expected ${width}x${height}`,
+        );
+      }
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   if (errors.length > 0) {
     throw new Error(
       `${plugin} (${browserTarget}):\n${errors.map((error) => `- ${error}`).join("\n")}`,
@@ -254,7 +287,9 @@ function main(): void {
   }
 
   const availablePlugins = discoverPlugins();
-  const plugins = requestedPlugin ? [requestedPlugin] : availablePlugins;
+  const plugins = requestedPlugin
+    ? [requestedPlugin]
+    : availablePlugins.filter((plugin) => plugin !== "_template");
   const browsers: BrowserTarget[] = requestedBrowser ? [requestedBrowser] : ["chrome", "firefox"];
   let failed = false;
 

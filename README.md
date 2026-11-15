@@ -108,7 +108,7 @@ pnpm validate:manifests --plugin dark-mode-lite --browser firefox
 pnpm validate:store-readiness --plugin dark-mode-lite --browser chrome --allow-incomplete
 ```
 
-The store-readiness check currently uses `--allow-incomplete` because real screenshots are still pending. Without that flag, unchecked screenshot items fail validation.
+The template is intentionally excluded from store readiness. Released plugins have generated listing assets and are checked without `--allow-incomplete`.
 
 ## Testing
 

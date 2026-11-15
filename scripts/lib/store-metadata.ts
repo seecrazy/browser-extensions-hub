@@ -17,6 +17,10 @@ export type ChromeStoreMetadata = {
     category: string | null;
     language: string;
     screenshotPaths: string[];
+    promoImages: {
+      small: string | null;
+      marquee: string | null;
+    };
     privacyPolicyUrl: string | null;
     supportUrl: string | null;
     homepageUrl: string | null;
@@ -121,6 +125,8 @@ export function buildChromeStoreMetadata(input: {
   privacyMarkdown: string;
   permissionsMarkdown: string;
   manifest: Manifest;
+  screenshotPaths?: string[];
+  promoImages?: { small?: string | null; marquee?: string | null };
 }): ChromeStoreMetadata {
   if (input.manifest.version !== input.version) {
     throw new Error(
@@ -136,7 +142,9 @@ export function buildChromeStoreMetadata(input: {
 
   const openItems: string[] = [
     "Select a Chrome Web Store category in the dashboard.",
-    "Add the required store screenshots.",
+    ...(input.screenshotPaths && input.screenshotPaths.length > 0
+      ? []
+      : ["Add the required store screenshots."]),
     "Set a privacy policy URL if required by the store review.",
     "Set support and homepage URLs, if you want them shown publicly.",
   ];
@@ -156,7 +164,11 @@ export function buildChromeStoreMetadata(input: {
       permissionJustification: input.listing.permissionJustification,
       category: null,
       language: "en",
-      screenshotPaths: [],
+      screenshotPaths: input.screenshotPaths ?? [],
+      promoImages: {
+        small: input.promoImages?.small ?? null,
+        marquee: input.promoImages?.marquee ?? null,
+      },
       privacyPolicyUrl: null,
       supportUrl: null,
       homepageUrl: null,
@@ -232,6 +244,17 @@ export function loadChromeStoreMetadata(options: {
   const listing = parseChromeListing(readFileSync(path.join(listingDir, "chrome.md"), "utf8"));
   const privacyMarkdown = readFileSync(path.join(listingDir, "privacy.md"), "utf8");
   const permissionsMarkdown = readFileSync(path.join(listingDir, "permissions.md"), "utf8");
+  const screenshotPaths = ["main-1280x800.png", "secondary-640x400.png"]
+    .map((file) => `images/screenshots/${file}`)
+    .filter((file) => exists(path.join(listingDir, file)));
+  const promoImages = {
+    small: exists(path.join(listingDir, "images/promo/small-440x280.png"))
+      ? "images/promo/small-440x280.png"
+      : null,
+    marquee: exists(path.join(listingDir, "images/promo/marquee-1400x560.png"))
+      ? "images/promo/marquee-1400x560.png"
+      : null,
+  };
   const metadata = buildChromeStoreMetadata({
     plugin: options.plugin,
     packageName: options.packageName,
@@ -240,6 +263,8 @@ export function loadChromeStoreMetadata(options: {
     privacyMarkdown,
     permissionsMarkdown,
     manifest,
+    screenshotPaths,
+    promoImages,
   });
   const report = createChromeSubmissionReport(
     metadata,

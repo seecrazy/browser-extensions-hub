@@ -114,3 +114,4 @@
 - [x] Add Dark Mode runtime integration test.
 - [x] Add friendly restricted-page injection errors.
 - [x] Add one-command release orchestration.
+- [x] Generate Chrome store screenshots and promo images.
