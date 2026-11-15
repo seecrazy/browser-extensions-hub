@@ -20,6 +20,8 @@ Chrome Web Store CLI binary name.
   source archives, and creates checksums.
 - Release candidates allow incomplete listing assets with the same explicit
   warning used by CI while real screenshots remain pending.
+- Release packaging generates Chrome Web Store metadata and a copy-ready
+  submission report from the source-of-truth listing documents.
 - `--publish` performs explicit direct store submission from local credentials.
   It can be limited with `--skip-chrome` or `--skip-firefox`.
 - Direct submission enforces a complete listing unless `--allow-incomplete` is
@@ -35,6 +37,8 @@ Chrome Web Store CLI binary name.
 - One command covers the complete local release candidate flow.
 - A release candidate cannot accidentally become a strict store gate, while a
   final direct submission cannot silently bypass listing completeness.
+- Chrome dashboard-only fields remain explicit open items instead of being
+  fabricated from generic defaults.
 - Direct store submission is explicit and cannot accidentally push code.
 - Tag-push publishing remains the canonical reproducible CI flow.
 - Chrome Web Store submissions use the actual `chrome-webstore-upload` binary

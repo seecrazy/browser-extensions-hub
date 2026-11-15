@@ -23,13 +23,19 @@ The command:
 4. Builds Chrome and Firefox only for the selected plugin.
 5. Validates and lints both builds.
 6. Packs Chrome, Firefox, and Firefox source artifacts.
-7. Generates `SHA256SUMS`.
+7. Generates `store-metadata.json` and `chrome-store-submission.md` from the Chrome listing.
+8. Generates `SHA256SUMS`.
 
 Artifacts are written to:
 
 ```text
 release/<plugin>/<version>/
 ```
+
+The generated submission files contain:
+
+- `store-metadata.json`: machine-readable Chrome listing, permissions, compliance fields, and open dashboard items.
+- `chrome-store-submission.md`: copy-ready name, short description, detailed description, permission justification, privacy summary, and a checklist for dashboard-only fields such as category and screenshots.
 
 While store screenshots are incomplete, release candidates use the same
 allowance as CI automatically.

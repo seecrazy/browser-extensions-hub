@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
+import { loadChromeStoreMetadata } from "./lib/store-metadata";
 
 type ReleaseOptions = {
   plugin: string;
@@ -252,6 +253,15 @@ function packageArtifacts(options: ReleaseOptions, version: string): string {
     "package.json",
     "tsconfig.base.json",
   ]);
+
+  const { metadata, report } = loadChromeStoreMetadata({
+    plugin: options.plugin,
+    packageName: `@hub/${options.plugin}`,
+    version,
+    root,
+  });
+  writeText(path.join(releaseDir, "store-metadata.json"), `${JSON.stringify(metadata, null, 2)}\n`);
+  writeText(path.join(releaseDir, "chrome-store-submission.md"), report);
   writeChecksums(releaseDir);
 
   return releaseDir;

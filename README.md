@@ -179,7 +179,8 @@ pnpm release <plugin>
 
 This single command requires a clean Git tree, runs the release quality gates,
 builds only the selected plugin, validates Chrome/Firefox output, packs Chrome,
-Firefox, and Firefox source archives, and generates `SHA256SUMS`.
+Firefox, and Firefox source archives. It also generates Chrome Web Store
+submission metadata from the plugin's listing documents and `SHA256SUMS`.
 
 Artifacts are written to:
 
