@@ -31,10 +31,17 @@ Artifacts are written to:
 release/<plugin>/<version>/
 ```
 
-Incomplete store screenshots can follow current CI behavior with:
+While store screenshots are incomplete, release candidates use the same
+allowance as CI automatically.
 
 ```bash
-pnpm release <plugin> --allow-incomplete
+pnpm release <plugin>
+```
+
+To enforce a complete listing instead:
+
+```bash
+pnpm release <plugin> --publish
 ```
 
 ## Direct store submission
@@ -62,6 +69,13 @@ pnpm release <plugin> --publish --skip-firefox
 
 This mode is explicit and final: it uploads and publishes Chrome, and submits
 Firefox to the listed AMO channel. Review the version and artifacts first.
+
+Direct submission requires a complete store-listing checklist. Only use the
+following override if the incomplete items are known and accepted:
+
+```bash
+pnpm release <plugin> --publish --allow-incomplete
+```
 
 ## Tag and trigger CI
 

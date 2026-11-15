@@ -187,11 +187,9 @@ Artifacts are written to:
 release/<plugin>/<version>/
 ```
 
-While real store screenshots are pending, use the same allowance as CI:
-
-```bash
-pnpm release <plugin> --allow-incomplete
-```
+While real store screenshots are pending, release candidates use the same
+allowance as CI automatically. Direct store submission remains strict unless
+`--allow-incomplete` is passed explicitly.
 
 ### Direct store submission
 

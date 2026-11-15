@@ -138,6 +138,17 @@ function assertCleanTree(): void {
 }
 
 function assertQuality(options: ReleaseOptions): void {
+  // Release candidates use the same current-CI allowance for incomplete listing
+  // assets. Direct store submission remains strict unless it is explicitly
+  // overridden, because that action is final.
+  const allowIncomplete = options.allowIncomplete || !options.publish;
+
+  if (allowIncomplete && !options.allowIncomplete) {
+    console.warn(
+      "! Store listing completeness is not enforced for a release candidate. --publish enforces it unless --allow-incomplete is passed.",
+    );
+  }
+
   run("pnpm", ["install", "--frozen-lockfile"]);
   run("pnpm", ["typecheck"]);
   run("pnpm", ["lint"]);
@@ -172,7 +183,7 @@ function assertQuality(options: ReleaseOptions): void {
     options.plugin,
     "--browser",
     "chrome",
-    ...(options.allowIncomplete ? ["--allow-incomplete"] : []),
+    ...(allowIncomplete ? ["--allow-incomplete"] : []),
   ]);
   run("pnpm", [
     "validate:store-readiness",
@@ -180,7 +191,7 @@ function assertQuality(options: ReleaseOptions): void {
     options.plugin,
     "--browser",
     "firefox",
-    ...(options.allowIncomplete ? ["--allow-incomplete"] : []),
+    ...(allowIncomplete ? ["--allow-incomplete"] : []),
   ]);
 }
 
