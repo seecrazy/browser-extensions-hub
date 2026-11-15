@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
 export type ChromeStoreMetadata = {
@@ -246,12 +246,12 @@ export function loadChromeStoreMetadata(options: {
   const permissionsMarkdown = readFileSync(path.join(listingDir, "permissions.md"), "utf8");
   const screenshotPaths = ["main-1280x800.png", "secondary-640x400.png"]
     .map((file) => `images/screenshots/${file}`)
-    .filter((file) => exists(path.join(listingDir, file)));
+    .filter((file) => existsSync(path.join(listingDir, file)));
   const promoImages = {
-    small: exists(path.join(listingDir, "images/promo/small-440x280.png"))
+    small: existsSync(path.join(listingDir, "images/promo/small-440x280.png"))
       ? "images/promo/small-440x280.png"
       : null,
-    marquee: exists(path.join(listingDir, "images/promo/marquee-1400x560.png"))
+    marquee: existsSync(path.join(listingDir, "images/promo/marquee-1400x560.png"))
       ? "images/promo/marquee-1400x560.png"
       : null,
   };
