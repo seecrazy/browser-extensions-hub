@@ -60,9 +60,8 @@ pnpm release <plugin> --publish --skip-chrome
 pnpm release <plugin> --publish --skip-firefox
 ```
 
-The Chrome CLI uploads the selected build to the Chrome Web Store. Review the
-version in the Chrome dashboard before the final dashboard publish action.
-Firefox is signed on the listed AMO channel.
+This mode is explicit and final: it uploads and publishes Chrome, and submits
+Firefox to the listed AMO channel. Review the version and artifacts first.
 
 ## Tag and trigger CI
 
